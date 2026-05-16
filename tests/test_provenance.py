@@ -2,10 +2,15 @@ import json
 from pathlib import Path
 
 from distillation_policy import should_distill
-from source_spans import validate_claims_against_cards
+from research_claim_extractor import extract_claims_from_cards
+from source_spans import validate_claim_contract, validate_claims_against_cards
 
 
 ROOT = Path(__file__).parent.parent
+REAL_FIXTURES = [
+    ("maude_2018_cart.json", "maude_2018_claims.json"),
+    ("neelapu_2017_axi_cel.json", "neelapu_2017_claims.json"),
+]
 
 
 class EmptyGraph:
@@ -16,10 +21,34 @@ class EmptyGraph:
         return False
 
 
-def test_maude_claims_have_verbatim_source_spans():
-    cards = json.loads((ROOT / "data" / "maude_2018_cart.json").read_text())
-    claims = json.loads((ROOT / "data" / "maude_2018_claims.json").read_text())
-    assert validate_claims_against_cards(claims, cards) == []
+def _read_data(name: str):
+    return json.loads((ROOT / "data" / name).read_text())
+
+
+def test_real_claims_have_verbatim_source_spans_and_contract_fields():
+    for cards_file, claims_file in REAL_FIXTURES:
+        cards = _read_data(cards_file)
+        claims = _read_data(claims_file)
+        assert validate_claims_against_cards(claims, cards) == []
+
+
+def test_curated_extractor_regenerates_committed_real_claims():
+    for cards_file, claims_file in REAL_FIXTURES:
+        cards = _read_data(cards_file)
+        expected_claims = _read_data(claims_file)
+        assert extract_claims_from_cards(cards, extractor="curated") == expected_claims
+
+
+def test_contract_reports_missing_required_provenance_fields():
+    claim = _read_data("neelapu_2017_claims.json")[0]
+    malformed = {**claim, "evidence_span_valid": False}
+    del malformed["paper_title"]
+
+    issues = validate_claim_contract(malformed)
+    codes = [issue.code for issue in issues]
+
+    assert "missing_contract_field" in codes
+    assert "invalid_evidence_span" in codes
 
 
 def test_distillation_rejects_unvalidated_real_claim_span():
@@ -36,4 +65,3 @@ def test_distillation_rejects_unvalidated_real_claim_span():
     decision = should_distill(claim, EmptyGraph())
     assert decision.promote is False
     assert "evidence span" in decision.reason
-

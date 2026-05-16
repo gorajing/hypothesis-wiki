@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from research_claim_extractor import extract_claims_from_cards
+from source_spans import validate_claims_against_cards
 
 
 SEMANTIC_SCHOLAR_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
@@ -35,6 +36,11 @@ def main() -> None:
         _write_json(Path(args.cards_out), cards)
 
     claims = extract_claims_from_cards(cards, extractor=args.extractor, model=args.model)
+    issues = validate_claims_against_cards(claims, cards)
+    if issues:
+        detail = "\n".join(f"- {issue.code}: {issue.claim_id}: {issue.message}" for issue in issues)
+        raise RuntimeError(f"extracted claims failed provenance validation:\n{detail}")
+
     _write_json(Path(args.claims_out), claims)
 
     cards_location = args.from_cards or args.cards_out

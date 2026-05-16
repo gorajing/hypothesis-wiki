@@ -27,6 +27,11 @@ data/real_paper_cards.json
 data/real_claims.json
 ```
 
+Before `claims-out` is written, the ingestion command validates every claim
+against the provenance contract: required metadata fields, a verbatim
+`evidence_span`, deterministic `evidence_start` / `evidence_end`, and
+`evidence_span_valid: true`.
+
 ## Use The Real Maude 2018 Fixture
 
 For the first real-paper demo, use the curated Maude 2018 CAR-T fixture borrowed from the BioRender FigureSpec work:
@@ -39,6 +44,16 @@ python3 ingest_real_research.py \
 ```
 
 This path is deterministic but substantive: every claim points to a real paper identifier and a verbatim evidence span.
+
+The second deterministic fixture exercises the same path on the Neelapu 2017
+ZUMA-1 axi-cel trial:
+
+```bash
+python3 ingest_real_research.py \
+  --from-cards data/neelapu_2017_axi_cel.json \
+  --claims-out data/neelapu_2017_claims.json \
+  --extractor curated
+```
 
 ## Extract With OpenAI
 
