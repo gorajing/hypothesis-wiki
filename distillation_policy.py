@@ -29,6 +29,14 @@ def should_distill(claim: dict, graph_state) -> DistillDecision:
     if not claim.get("text"):
         return reject("missing claim text")
 
+    if claim.get("evidence_span") and not claim.get("evidence_span_valid"):
+        return reject("evidence span was not validated")
+
+    if claim.get("evidence_span") and (
+        claim.get("evidence_start") is None or claim.get("evidence_end") is None
+    ):
+        return reject("evidence span missing offsets")
+
     if graph_state.has_duplicate(claim):
         return reject("near duplicate")
 
@@ -58,4 +66,3 @@ def should_distill(claim: dict, graph_state) -> DistillDecision:
         return promote("retirement keeps audit trail", confidence=0.9)
 
     return reject(f"unknown claim kind: {kind}")
-

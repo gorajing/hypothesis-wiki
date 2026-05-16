@@ -43,6 +43,10 @@ Candidate claims live first in Redis session memory.
   "outcome": "capacity retention",
   "direction": "improves",
   "evidence_type": "paper_card",
+  "evidence_span": "AX-17 improved capacity retention by 22%.",
+  "evidence_start": 123,
+  "evidence_end": 183,
+  "evidence_span_valid": true,
   "status": "candidate",
   "confidence": 0.62
 }
@@ -106,4 +110,3 @@ retire(claim_id, reason, evidence_id) -> None
 ```
 
 Retrieval should stay roughly flat while hypothesis hygiene improves. That prevents the obvious judge objection: "Did you become more cautious by retrieving less?"
-

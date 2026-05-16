@@ -1,0 +1,100 @@
+[
+  {
+    "paper_id": "maude_2018_cart",
+    "title": "Tisagenlecleucel in Children and Young Adults with B-Cell Lymphoblastic Leukemia",
+    "authors": ["Maude SL", "Laetsch TW", "Buechner J"],
+    "year": 2018,
+    "journal": "New England Journal of Medicine",
+    "doi": "10.1056/NEJMoa1709866",
+    "pmid": "29385370",
+    "pmcid": "PMC5996391",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29385370/",
+    "source_type": "curated_real_paper_fixture",
+    "source_note": "Curated from the real Maude 2018 NEJM CAR-T abstract already used in biorender-figure-compiler.",
+    "abstract": "Background: In a single-center phase 1-2a study, the anti-CD19 chimeric antigen receptor (CAR) T-cell therapy tisagenlecleucel produced high rates of complete remission and was associated with serious but mainly reversible toxic effects in children and young adults with relapsed or refractory B-cell acute lymphoblastic leukemia (ALL).\n\nMethods: We conducted a phase 2, single-cohort, 25-center, global study of tisagenlecleucel in pediatric and young adult patients with CD19+ relapsed or refractory B-cell ALL. The primary end point was the overall remission rate (the rate of complete remission or complete remission with incomplete hematologic recovery) within 3 months.\n\nResults: For this planned analysis, 75 patients received an infusion of tisagenlecleucel and could be evaluated for efficacy. The overall remission rate within 3 months was 81%, with all patients who had a response to treatment found to be negative for minimal residual disease, as assessed by means of flow cytometry. The rates of event-free survival and overall survival were 73% (95% confidence interval [CI], 60 to 82) and 90% (95% CI, 81 to 95), respectively, at 6 months and 50% (95% CI, 35 to 64) and 76% (95% CI, 63 to 86) at 12 months. The median duration of remission was not reached. Persistence of tisagenlecleucel in the blood was observed for as long as 20 months. Grade 3 or 4 adverse events that were suspected to be related to tisagenlecleucel occurred in 73% of patients. The cytokine release syndrome occurred in 77% of patients, 48% of whom received tocilizumab. Neurologic events occurred in 40% of patients and were managed with supportive care, and no cerebral edema was reported.\n\nConclusions: In this global study of CAR T-cell therapy, a single infusion of tisagenlecleucel provided durable remission with long-term persistence in pediatric and young adult patients with relapsed or refractory B-cell ALL, with transient high-grade toxic effects.",
+    "source_text": "Background: In a single-center phase 1-2a study, the anti-CD19 chimeric antigen receptor (CAR) T-cell therapy tisagenlecleucel produced high rates of complete remission and was associated with serious but mainly reversible toxic effects in children and young adults with relapsed or refractory B-cell acute lymphoblastic leukemia (ALL).\n\nMethods: We conducted a phase 2, single-cohort, 25-center, global study of tisagenlecleucel in pediatric and young adult patients with CD19+ relapsed or refractory B-cell ALL. The primary end point was the overall remission rate (the rate of complete remission or complete remission with incomplete hematologic recovery) within 3 months. Tisagenlecleucel was generated ex vivo with the use of autologous T cells transduced with a lentiviral vector to express a CAR containing a CD3-zeta domain to provide a T-cell activation signal and a 4-1BB (CD137) domain to provide a costimulatory signal.\n\nResults: For this planned analysis, 75 patients received an infusion of tisagenlecleucel and could be evaluated for efficacy. The overall remission rate within 3 months was 81%, with all patients who had a response to treatment found to be negative for minimal residual disease, as assessed by means of flow cytometry. The rates of event-free survival and overall survival were 73% (95% confidence interval [CI], 60 to 82) and 90% (95% CI, 81 to 95), respectively, at 6 months and 50% (95% CI, 35 to 64) and 76% (95% CI, 63 to 86) at 12 months. The median duration of remission was not reached. Persistence of tisagenlecleucel in the blood was observed for as long as 20 months. Grade 3 or 4 adverse events that were suspected to be related to tisagenlecleucel occurred in 73% of patients. The cytokine release syndrome occurred in 77% of patients, 48% of whom received tocilizumab. Neurologic events occurred in 40% of patients and were managed with supportive care, and no cerebral edema was reported.\n\nConclusions: In this global study of CAR T-cell therapy, a single infusion of tisagenlecleucel provided durable remission with long-term persistence in pediatric and young adult patients with relapsed or refractory B-cell ALL, with transient high-grade toxic effects.",
+    "expected_claims": [
+      {
+        "id": "claim_maude_remission_rate",
+        "kind": "hypothesis",
+        "text": "Tisagenlecleucel produced an 81% overall remission rate within 3 months.",
+        "evidence_span": "The overall remission rate within 3 months was 81%",
+        "scope_conditions": ["within 3 months", "pediatric and young adult patients", "CD19+ relapsed or refractory B-cell ALL"],
+        "outcome": "overall remission rate",
+        "direction": "improves",
+        "confidence": 0.93
+      },
+      {
+        "id": "claim_maude_mrd_negative",
+        "kind": "evidence",
+        "text": "All responders were negative for minimal residual disease by flow cytometry.",
+        "evidence_span": "all patients who had a response to treatment found to be negative for minimal residual disease, as assessed by means of flow cytometry",
+        "scope_conditions": ["responders", "flow cytometry"],
+        "outcome": "minimal residual disease",
+        "direction": "observes",
+        "confidence": 0.91
+      },
+      {
+        "id": "claim_maude_survival",
+        "kind": "evidence",
+        "text": "Event-free and overall survival were reported at 6 and 12 months.",
+        "evidence_span": "The rates of event-free survival and overall survival were 73% (95% confidence interval [CI], 60 to 82) and 90% (95% CI, 81 to 95), respectively, at 6 months and 50% (95% CI, 35 to 64) and 76% (95% CI, 63 to 86) at 12 months.",
+        "scope_conditions": ["at 6 months", "at 12 months"],
+        "outcome": "event-free survival and overall survival",
+        "direction": "observes",
+        "confidence": 0.9
+      },
+      {
+        "id": "claim_maude_persistence",
+        "kind": "evidence",
+        "text": "Tisagenlecleucel persistence was observed in blood for as long as 20 months.",
+        "evidence_span": "Persistence of tisagenlecleucel in the blood was observed for as long as 20 months.",
+        "scope_conditions": ["blood", "as long as 20 months"],
+        "outcome": "tisagenlecleucel persistence",
+        "direction": "observes",
+        "confidence": 0.88
+      },
+      {
+        "id": "claim_maude_grade_3_4_ae",
+        "kind": "negative_result",
+        "text": "Grade 3 or 4 adverse events suspected to be related to tisagenlecleucel occurred in 73% of patients.",
+        "evidence_span": "Grade 3 or 4 adverse events that were suspected to be related to tisagenlecleucel occurred in 73% of patients.",
+        "scope_conditions": ["suspected related adverse events"],
+        "outcome": "grade 3 or 4 adverse events",
+        "direction": "safety_risk",
+        "confidence": 0.9
+      },
+      {
+        "id": "claim_maude_crs",
+        "kind": "negative_result",
+        "text": "Cytokine release syndrome occurred in 77% of patients.",
+        "evidence_span": "The cytokine release syndrome occurred in 77% of patients, 48% of whom received tocilizumab.",
+        "scope_conditions": ["48% received tocilizumab"],
+        "outcome": "cytokine release syndrome",
+        "direction": "safety_risk",
+        "confidence": 0.9
+      },
+      {
+        "id": "claim_maude_neuro_events",
+        "kind": "negative_result",
+        "text": "Neurologic events occurred in 40% of patients and no cerebral edema was reported.",
+        "evidence_span": "Neurologic events occurred in 40% of patients and were managed with supportive care, and no cerebral edema was reported.",
+        "scope_conditions": ["managed with supportive care", "no cerebral edema reported"],
+        "outcome": "neurologic events",
+        "direction": "safety_risk",
+        "confidence": 0.9
+      },
+      {
+        "id": "claim_maude_mechanism",
+        "kind": "evidence",
+        "text": "Tisagenlecleucel was generated from autologous T cells transduced with a lentiviral vector expressing CAR signaling domains.",
+        "evidence_span": "Tisagenlecleucel was generated ex vivo with the use of autologous T cells transduced with a lentiviral vector to express a CAR containing a CD3-zeta domain to provide a T-cell activation signal and a 4-1BB (CD137) domain to provide a costimulatory signal.",
+        "scope_conditions": ["ex vivo generation", "autologous T cells", "lentiviral vector"],
+        "outcome": "CAR-T manufacturing mechanism",
+        "direction": "observes",
+        "confidence": 0.88
+      }
+    ]
+  }
+]
+

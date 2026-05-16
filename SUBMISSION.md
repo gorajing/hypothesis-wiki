@@ -28,7 +28,12 @@ Queries read from the trusted Cognee graph. A critic scores the answer for scien
 - did it avoid overgeneralizing?
 - did it retire contradicted claims?
 
-Low-scoring runs produce skill feedback. The improved distiller preserves scope conditions and promotes negative results as first-class evidence.
+The distillation gate's rejection reasons and the critic's notes are the
+feedback signal. `propose_skill_revision(feedback)` derives a stronger
+distiller skill from exactly those signals (and only those — unrelated
+feedback is a no-op), the skill is written to disk, and the next run is
+distilled with it. The improvement is a measured consequence of the skill
+change, not a hand-written before/after.
 
 ## Lint
 
@@ -70,29 +75,40 @@ Cognee is the trusted scientific graph.
 
 ## Self-Improvement Evidence
 
-Headline demo:
+The loop is executed, not scripted. `demo.py` runs the distiller with the
+real v1 skill, gates every claim through `should_distill`, derives the
+critic score from graph state, proposes a revised skill **from that
+feedback**, writes it to `my_skills/hypothesis_distiller/SKILL.proposed.md`,
+and re-runs with it.
 
 ```text
-Research question: Should AX-17 be used for high-temperature battery cells?
+Run 1 (SKILL.md / v1)
+  distiller drops scope -> gate rejects all 4 claims
+  answer (from quarantine): AX-17 improves battery stability and should be
+    used for high-temperature cells.
 
-Run 1 answer:
-AX-17 improves battery stability and should be used for high-temperature cells.
+Self-improvement
+  feedback = 4 gate rejections + 2 critic notes
+  propose_skill_revision(feedback) -> SKILL.proposed.md (scope-preserving)
 
-Lint:
-Missing scope condition below 40C / electrolyte E1.
-Omitted negative evidence at 60C and E2.
-
-Run 2 answer:
-AX-17 is supported only below 40C with electrolyte E1. High-temperature and E2 evidence is negative or non-replicating.
+Run 2 (SKILL.proposed.md / applied)
+  scope preserved -> gate promotes 4 claims, 3 contradictions surfaced,
+    broad claim retired
+  answer: AX-17 is supported only under 25C, coin cell, electrolyte E1;
+    high-temperature, E2, and pouch-cell evidence is negative or
+    non-replicating.
 ```
 
-Score:
+Score (every value computed from graph state; no hardcoded numbers):
 
 ```text
-Retrieval score:        0.91 -> 0.91
-Hypothesis hygiene:     0.35 -> 0.88
-Scope errors:           2    -> 0
-Contradictions caught:  0    -> 2
-Retired claims:         0    -> 1
+retrieval_score:        0.70 -> 0.70
+hypothesis_hygiene:     0.15 -> 1.00
+scope_errors:           1    -> 0
+contradictions_caught:  0    -> 3
+retired_claims:         0    -> 1
 ```
+
+Retrieval is deliberately flat: the improved answer is more cautious, not
+less retrieved, which closes the obvious "you just retrieved less" objection.
 

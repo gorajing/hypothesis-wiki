@@ -12,28 +12,46 @@ Research question:
 Should AX-17 be used for high-temperature battery cells?
 ```
 
-The baseline answer overclaims from a positive paper. The improved answer preserves the scope conditions and negative evidence:
+With the weak v1 skill, the distiller drops scope, the distillation gate rejects every claim, and the agent overclaims from unverified session memory. After the skill is improved from that feedback, the same query is answered from scoped, promoted evidence:
 
 ```text
-AX-17 only has support below 40C with electrolyte E1; high-temperature and E2 evidence is negative or non-replicating.
+AX-17 is supported only under 25C, coin cell, electrolyte E1; high-temperature, E2, and pouch-cell evidence is negative or non-replicating.
 ```
 
 ## Quickstart
 
-The deterministic demo has no external dependencies:
+The demo has no external dependencies:
 
 ```bash
 python3 demo.py
 ```
 
-Expected headline:
+Build real-paper claims from the Maude 2018 CAR-T fixture:
+
+```bash
+python3 ingest_real_research.py \
+  --from-cards data/maude_2018_cart.json \
+  --claims-out data/maude_2018_claims.json \
+  --extractor curated
+```
+
+Behavior is covered by tests (the scorer reads graph state, the v1→v2 skill change is executed, not scripted):
+
+```bash
+python3 -m pytest tests/ -q
+```
+
+Expected headline (every value computed from graph state, nothing hardcoded):
 
 ```text
-Hypothesis hygiene: 0.35 -> 0.88
-Scope errors:       2 -> 0
-Contradictions:     0 -> 2
-Retired claims:     0 -> 1
+retrieval_score:       0.70 -> 0.70
+hypothesis_hygiene:    0.15 -> 1.00
+scope_errors:          1 -> 0
+contradictions_caught: 0 -> 3
+retired_claims:        0 -> 1
 ```
+
+Retrieval stays flat by design: the improved answer is more cautious, not less informed.
 
 ## Architecture
 
@@ -52,15 +70,19 @@ paper cards
 
 ```text
 data/paper_cards.json                 controlled science corpus
+distiller.py                           skill-driven distiller + skill proposer
 distillation_policy.py                 promotion gate from Redis to Cognee
-critic.py                              lint checks and scoring
-demo.py                                deterministic before/after demo
+critic.py                              graph-derived scoring + lint
+demo.py                                end-to-end before/after demo
+tests/                                 behavior tests (pytest)
 docs/ARCHITECTURE.md                   design overview
 docs/DATA_CONTRACTS.md                 claim and memory schemas
 docs/IMPLEMENTATION_PLAN.md            build order and cut lines
 docs/DEMO_SCRIPT.md                    3-minute presentation script
+docs/PROVENANCE_CONTRACT.md            verbatim evidence-span contract
 SUBMISSION.md                          hackathon submission draft
-my_skills/hypothesis_distiller/        baseline and improved skill text
+my_skills/hypothesis_distiller/        v1 + v2 skills; SKILL.proposed.md is
+                                       written by the demo's apply step
 ```
 
 ## Hackathon Framing
@@ -70,4 +92,3 @@ Redis is not just a cache. It is the scientific quarantine layer: raw papers, ca
 Cognee is the trusted graph: promoted hypotheses, evidence links, contradiction edges, retired claims, and skill improvements live there.
 
 The unique angle is the distillation policy between them.
-
