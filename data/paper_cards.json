@@ -1,0 +1,51 @@
+[
+  {
+    "paper_id": "paper_a",
+    "title": "AX-17 improves low-temperature lithium-cell retention",
+    "year": 2025,
+    "url": "https://example.org/paper-a",
+    "abstract": "AX-17 improved capacity retention by 22% after 500 cycles in coin cells tested at 25C with electrolyte E1.",
+    "finding": "AX-17 improved capacity retention by 22% after 500 cycles.",
+    "conditions": ["25C", "coin cell", "electrolyte E1"],
+    "outcome": "capacity retention",
+    "direction": "improves",
+    "result_type": "positive"
+  },
+  {
+    "paper_id": "paper_b",
+    "title": "Temperature-dependent limits of AX-17 electrolyte additives",
+    "year": 2025,
+    "url": "https://example.org/paper-b",
+    "abstract": "AX-17 improved retention below 40C but increased degradation at 60C across repeated cycling tests.",
+    "finding": "AX-17 benefits disappear at high temperature and degradation increases at 60C.",
+    "conditions": ["below 40C benefit", "60C degradation"],
+    "outcome": "capacity retention",
+    "direction": "conditional",
+    "result_type": "conditional"
+  },
+  {
+    "paper_id": "paper_c",
+    "title": "Replication of AX-17 depends on electrolyte background",
+    "year": 2026,
+    "url": "https://example.org/paper-c",
+    "abstract": "An independent lab replicated AX-17's retention benefit with electrolyte E1 but found no measurable benefit with electrolyte E2.",
+    "finding": "AX-17 replicated only with electrolyte E1 and failed to improve retention with E2.",
+    "conditions": ["electrolyte E1 replication", "electrolyte E2 no benefit"],
+    "outcome": "capacity retention",
+    "direction": "conditional",
+    "result_type": "replication_failure"
+  },
+  {
+    "paper_id": "paper_d",
+    "title": "Pouch-cell validation finds no high-temperature AX-17 benefit",
+    "year": 2026,
+    "url": "https://example.org/paper-d",
+    "abstract": "Pouch-cell tests found no measurable AX-17 benefit under high-temperature operating conditions.",
+    "finding": "AX-17 had no measurable benefit in high-temperature pouch-cell tests.",
+    "conditions": ["pouch cell", "high-temperature operation"],
+    "outcome": "capacity retention",
+    "direction": "no_benefit",
+    "result_type": "negative"
+  }
+]
+

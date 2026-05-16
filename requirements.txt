@@ -1,0 +1,5 @@
+# Hackathon environment dependencies.
+# Install Cognee with Redis extras according to the hackathon README.
+cognee[redis]
+redis
+
