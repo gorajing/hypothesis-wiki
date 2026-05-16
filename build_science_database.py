@@ -11,8 +11,7 @@ from source_spans import validate_claims_against_cards
 
 ROOT = Path(__file__).parent
 DEFAULT_SOURCES = (
-    ("data/maude_2018_cart.json", "data/maude_2018_claims.json"),
-    ("data/neelapu_2017_axi_cel.json", "data/neelapu_2017_claims.json"),
+    ("data/mlperf_v5_1_cards.json", "data/mlperf_v5_1_claims.json"),
 )
 DEFAULT_OUTPUT = "data/science_claim_audit_db.json"
 
@@ -64,25 +63,26 @@ def build_database(sources: list[tuple[Path, Path]]) -> dict[str, Any]:
         "database_name": "hypothesis_wiki_science_claim_audit_db",
         "version": 1,
         "description": (
-            "A small real-paper claim audit database: CAR-T trial claims with "
-            "PubMed/DOI provenance, verbatim evidence spans, scope conditions, "
-            "safety-risk flags, and distillation-gate promotion decisions."
+            "A small AI benchmark claim audit database: MLPerf Inference v5.1 "
+            "result claims with source URLs, verbatim evidence spans, benchmark "
+            "scope conditions, scenario labels, and distillation-gate promotion "
+            "decisions."
         ),
         "summary": summary,
         "source_papers": papers,
         "demo_queries": [
             {
-                "id": "car_t_efficacy_safety",
-                "query": "What efficacy and safety claims are supported for the CAR-T trials?",
+                "id": "mlperf_llama2_scenario_scope",
+                "query": "What Llama2-70B throughput claims are supported, and under which MLPerf scenarios?",
                 "expected_behavior": (
-                    "Return efficacy claims with trial scope, and include safety-risk "
-                    "claims instead of only reporting response rates."
+                    "Return separate Offline and Server claims with hardware, benchmark, "
+                    "scenario, and measured samples/s preserved."
                 ),
             },
             {
-                "id": "car_t_safety_audit",
-                "query": "Which promoted CAR-T claims are safety risks?",
-                "expected_behavior": "Return CRS, neurologic events, cytopenias, adverse events, and deaths.",
+                "id": "mlperf_hardware_scope",
+                "query": "Which promoted benchmark claims are scoped to MI300X vs MI325X hardware?",
+                "expected_behavior": "Do not collapse MI300X and MI325X throughput claims into one generic result.",
             },
         ],
         "records": records,
@@ -165,6 +165,12 @@ def _audit_record(claim: dict[str, Any], decision) -> dict[str, Any]:
 
 
 def _audit_verdict(claim: dict[str, Any]) -> str:
+    if claim.get("source", "").startswith("mlperf_"):
+        if any("Server scenario" in scope for scope in claim.get("scope_conditions", [])):
+            return "server_benchmark_result"
+        if any("Offline scenario" in scope for scope in claim.get("scope_conditions", [])):
+            return "offline_benchmark_result"
+        return "scoped_benchmark_result"
     if claim.get("kind") == "negative_result" or claim.get("direction") == "safety_risk":
         return "safety_risk"
     if claim.get("kind") == "hypothesis" and claim.get("direction") == "improves":
@@ -194,6 +200,8 @@ def _summary(papers: list[dict[str, Any]], records: list[dict[str, Any]]) -> dic
         "claim_count": len(records),
         "provenance_valid_claims": sum(1 for record in records if record["evidence_span_valid"]),
         "trusted_graph_ready_claims": sum(1 for record in records if record["trusted_graph_ready"]),
+        "offline_benchmark_claims": verdicts["offline_benchmark_result"],
+        "server_benchmark_claims": verdicts["server_benchmark_result"],
         "safety_risk_claims": verdicts["safety_risk"],
         "supported_efficacy_claims": verdicts["supported_efficacy"],
         "supporting_evidence_claims": verdicts["supporting_evidence"],
@@ -209,8 +217,8 @@ def _print_summary(database: dict[str, Any], output_path: Path) -> None:
     print(f"claims:   {summary['claim_count']}")
     print(f"valid:    {summary['provenance_valid_claims']}")
     print(f"promote:  {summary['trusted_graph_ready_claims']}")
-    print(f"safety:   {summary['safety_risk_claims']}")
-    print(f"efficacy: {summary['supported_efficacy_claims']}")
+    print(f"offline:  {summary['offline_benchmark_claims']}")
+    print(f"server:   {summary['server_benchmark_claims']}")
 
 
 def _read_json(path: Path) -> Any:

@@ -1,0 +1,158 @@
+[
+  {
+    "paper_id": "mlperf_v5_1_0001_mi300x_llama2_offline",
+    "title": "MLPerf Inference v5.1 result 5.1-0001: Llama2-70B Offline on 8x AMD Instinct MI300X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0001.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0001 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark llama2-70b-99, scenario Offline, performance_sample_count 24576, and Result Samples per second 27803.9.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi300x_llama2_offline",
+        "kind": "evidence",
+        "text": "AS-8125GS-TNMR2 with 8x AMD Instinct MI300X reported 27,803.9 samples/s on llama2-70b-99 in the Offline scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0001 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark llama2-70b-99, scenario Offline, performance_sample_count 24576, and Result Samples per second 27803.9.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI300X"],
+        "outcome": "samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "paper_id": "mlperf_v5_1_0002_mi300x_llama2_server",
+    "title": "MLPerf Inference v5.1 result 5.1-0002: Llama2-70B Server on 8x AMD Instinct MI300X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0002.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0002 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark llama2-70b-99, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 24593.8.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi300x_llama2_server",
+        "kind": "evidence",
+        "text": "AS-8125GS-TNMR2 with 8x AMD Instinct MI300X reported 24,593.8 scheduled samples/s on llama2-70b-99 in the Server scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0002 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark llama2-70b-99, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 24593.8.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "llama2-70b-99", "Server scenario", "8x AMD Instinct MI300X"],
+        "outcome": "scheduled samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "paper_id": "mlperf_v5_1_0003_mi300x_mixtral_offline",
+    "title": "MLPerf Inference v5.1 result 5.1-0003: Mixtral-8x7B Offline on 8x AMD Instinct MI300X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0003.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0003 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark mixtral-8x7b, scenario Offline, performance_sample_count 24576, and Result Samples per second 53017.3.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi300x_mixtral_offline",
+        "kind": "evidence",
+        "text": "AS-8125GS-TNMR2 with 8x AMD Instinct MI300X reported 53,017.3 samples/s on mixtral-8x7b in the Offline scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0003 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark mixtral-8x7b, scenario Offline, performance_sample_count 24576, and Result Samples per second 53017.3.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "mixtral-8x7b", "Offline scenario", "8x AMD Instinct MI300X"],
+        "outcome": "samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "paper_id": "mlperf_v5_1_0004_mi300x_mixtral_server",
+    "title": "MLPerf Inference v5.1 result 5.1-0004: Mixtral-8x7B Server on 8x AMD Instinct MI300X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0004.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0004 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark mixtral-8x7b, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 47804.3.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi300x_mixtral_server",
+        "kind": "evidence",
+        "text": "AS-8125GS-TNMR2 with 8x AMD Instinct MI300X reported 47,804.3 scheduled samples/s on mixtral-8x7b in the Server scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0004 reports system_name AS-8125GS-TNMR2 with 8x AMD Instinct MI300X, benchmark mixtral-8x7b, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 47804.3.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "mixtral-8x7b", "Server scenario", "8x AMD Instinct MI300X"],
+        "outcome": "scheduled samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "paper_id": "mlperf_v5_1_0007_mi325x_llama2_offline",
+    "title": "MLPerf Inference v5.1 result 5.1-0007: Llama2-70B Offline on 8x AMD Instinct MI325X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0007.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0007 reports system_name QuantaGrid D74A-7U with 8x AMD Instinct MI325X, benchmark llama2-70b-99, scenario Offline, performance_sample_count 24576, and Result Samples per second 34520.4.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi325x_llama2_offline",
+        "kind": "evidence",
+        "text": "QuantaGrid D74A-7U with 8x AMD Instinct MI325X reported 34,520.4 samples/s on llama2-70b-99 in the Offline scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0007 reports system_name QuantaGrid D74A-7U with 8x AMD Instinct MI325X, benchmark llama2-70b-99, scenario Offline, performance_sample_count 24576, and Result Samples per second 34520.4.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI325X"],
+        "outcome": "samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  },
+  {
+    "paper_id": "mlperf_v5_1_0008_mi325x_llama2_server",
+    "title": "MLPerf Inference v5.1 result 5.1-0008: Llama2-70B Server on 8x AMD Instinct MI325X",
+    "authors": ["MLCommons"],
+    "year": 2025,
+    "journal": "MLPerf Inference Results v5.1",
+    "doi": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "source_type": "curated_mlperf_inference_result",
+    "source_note": "Curated from MLCommons MLPerf Inference v5.1 closed division summary result 5.1-0008.",
+    "source_text": "MLPerf Inference v5.1 closed division result 5.1-0008 reports system_name QuantaGrid D74A-7U with 8x AMD Instinct MI325X, benchmark llama2-70b-99, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 32027.6.",
+    "expected_claims": [
+      {
+        "id": "claim_mlperf_mi325x_llama2_server",
+        "kind": "evidence",
+        "text": "QuantaGrid D74A-7U with 8x AMD Instinct MI325X reported 32,027.6 scheduled samples/s on llama2-70b-99 in the Server scenario.",
+        "evidence_span": "MLPerf Inference v5.1 closed division result 5.1-0008 reports system_name QuantaGrid D74A-7U with 8x AMD Instinct MI325X, benchmark llama2-70b-99, scenario Server, performance_sample_count 24576, and Result Scheduled Samples per second 32027.6.",
+        "scope_conditions": ["MLPerf Inference v5.1", "closed division", "llama2-70b-99", "Server scenario", "8x AMD Instinct MI325X"],
+        "outcome": "scheduled samples per second",
+        "direction": "observes",
+        "confidence": 0.94
+      }
+    ]
+  }
+]

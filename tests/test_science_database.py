@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 from build_science_database import DEFAULT_SOURCES, ROOT, build_database
 from source_spans import validate_claims_against_cards
@@ -9,18 +8,19 @@ def test_science_claim_database_summary_matches_real_fixtures():
     database = build_database([(ROOT / cards, ROOT / claims) for cards, claims in DEFAULT_SOURCES])
 
     assert database["summary"] == {
-        "paper_count": 2,
-        "claim_count": 14,
-        "provenance_valid_claims": 14,
-        "trusted_graph_ready_claims": 14,
-        "safety_risk_claims": 6,
-        "supported_efficacy_claims": 2,
-        "supporting_evidence_claims": 6,
-        "promotion_status_counts": {"promote": 14},
+        "paper_count": 6,
+        "claim_count": 6,
+        "provenance_valid_claims": 6,
+        "trusted_graph_ready_claims": 6,
+        "offline_benchmark_claims": 3,
+        "server_benchmark_claims": 3,
+        "safety_risk_claims": 0,
+        "supported_efficacy_claims": 0,
+        "supporting_evidence_claims": 0,
+        "promotion_status_counts": {"promote": 6},
         "audit_verdict_counts": {
-            "safety_risk": 6,
-            "supported_efficacy": 2,
-            "supporting_evidence": 6,
+            "offline_benchmark_result": 3,
+            "server_benchmark_result": 3,
         },
     }
 
@@ -45,7 +45,7 @@ def test_science_claim_database_records_keep_verbatim_evidence_spans():
     assert all(record["evidence_start"] < record["evidence_end"] for record in records)
     assert all(record["trusted_graph_ready"] is True for record in records)
     assert {record["audit_verdict"] for record in records} == {
-        "safety_risk",
-        "supported_efficacy",
-        "supporting_evidence",
+        "offline_benchmark_result",
+        "server_benchmark_result",
     }
+    assert all("MLPerf Inference v5.1" in record["scope_conditions"] for record in records)

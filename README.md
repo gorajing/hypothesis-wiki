@@ -26,12 +26,12 @@ The demo has no external dependencies:
 python3 demo.py
 ```
 
-Build real-paper claims from the Maude 2018 CAR-T fixture:
+Build AI benchmark claims from the MLPerf Inference v5.1 fixture:
 
 ```bash
 python3 ingest_real_research.py \
-  --from-cards data/maude_2018_cart.json \
-  --claims-out data/maude_2018_claims.json \
+  --from-cards data/mlperf_v5_1_cards.json \
+  --claims-out data/mlperf_v5_1_claims.json \
   --extractor curated
 ```
 
@@ -44,12 +44,12 @@ python3 build_science_database.py
 Expected database summary:
 
 ```text
-papers:   2
-claims:   14
-valid:    14
-promote:  14
-safety:   6
-efficacy: 2
+papers:   6
+claims:   6
+valid:    6
+promote:  6
+offline:  3
+server:   3
 ```
 
 Behavior is covered by tests (the scorer reads graph state, the v1→v2 skill change is executed, not scripted):
