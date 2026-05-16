@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import warnings
 from dataclasses import asdict
+from inspect import iscoroutinefunction
 from typing import Any, Protocol
 
 from distillation_policy import DistillDecision, should_distill
@@ -71,6 +73,13 @@ class RedisSessionStore:
 
 
 class CogneeTrustedGraphStore:
+    """Trusted graph adapter for Cognee's async memory API.
+
+    API assumption: the installed Cognee module exposes coroutine functions
+    `remember(payload: str)` and `recall(query: str)`. Session-scoped memory is
+    intentionally not used here; Redis owns quarantine/session routing.
+    """
+
     def __init__(self, cognee_module: Any) -> None:
         self.cognee = cognee_module
         self.claims: list[dict[str, Any]] = []
@@ -177,7 +186,23 @@ def _create_trusted_graph(use_cognee: bool | None) -> TrustedGraphStore:
     except ImportError:
         return InMemoryTrustedGraphStore()
 
+    if not _has_compatible_cognee_api(cognee):
+        warnings.warn(
+            "COGNEE_ENABLED=1 but Cognee does not expose async remember(payload) "
+            "and recall(query); falling back to InMemoryTrustedGraphStore.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return InMemoryTrustedGraphStore()
+
     return CogneeTrustedGraphStore(cognee)
+
+
+def _has_compatible_cognee_api(cognee_module: Any) -> bool:
+    return all(
+        iscoroutinefunction(getattr(cognee_module, name, None))
+        for name in ("remember", "recall")
+    )
 
 
 def _matches_query(payload: dict[str, Any], query: str) -> bool:

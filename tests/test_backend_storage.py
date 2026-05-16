@@ -1,4 +1,8 @@
 import asyncio
+import sys
+import types
+
+import pytest
 
 from backend.storage import (
     CogneeTrustedGraphStore,
@@ -119,3 +123,16 @@ def test_cognee_trusted_graph_store_writes_without_session_id():
     assert len(cognee.remembered) == 1
     assert "session_id" not in cognee.remembered[0]
     assert run(store.recall("AX-17")) == [claim]
+
+
+def test_enabled_cognee_with_incompatible_api_warns_and_falls_back(monkeypatch):
+    fake_cognee = types.SimpleNamespace(
+        remember=lambda payload: None,
+        recall=lambda query: [],
+    )
+    monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+
+    with pytest.warns(RuntimeWarning, match="falling back to InMemoryTrustedGraphStore"):
+        backend = run(create_memory_backend(redis_url=None, use_cognee=True))
+
+    assert isinstance(backend.trusted_graph, InMemoryTrustedGraphStore)
