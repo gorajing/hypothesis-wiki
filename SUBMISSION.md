@@ -1,114 +1,441 @@
-# Hypothesis Wiki
+# Team Submission
 
-## What We Built
+## Team
 
-Hypothesis Wiki is a self-correcting scientific knowledge wiki. It uses Redis as a session-memory quarantine for tentative scientific claims and Cognee as the trusted graph for promoted hypotheses, evidence, contradictions, retired claims, and skill feedback.
+Team name: Hypothesis Wiki
 
-The wiki improves by learning which claims deserve promotion. It rewards source attribution, scope preservation, negative evidence, and contradiction handling.
+Participants: Jin Choi
 
-## Ingest
+Wiki / project name: Hypothesis Wiki
 
-Scientific paper cards are ingested into Redis session memory. Each card is deterministically transformed into typed candidate claims:
+## Wiki Overview
 
-- hypothesis
-- evidence
-- negative result
-- contradiction
-- retired claim
+Hypothesis Wiki is a self-correcting scientific knowledge wiki for auditing
+claims in research literature. Redis acts as the hot session-memory quarantine:
+raw papers, candidate claims, rejected claims, critic notes, and run traces are
+kept there until they earn promotion. Cognee is the durable trusted graph:
+only attributed, scoped, provenance-validated claims are promoted into it. The
+wiki self-improves by using distillation-gate rejections and critic feedback to
+rewrite the distiller skill, then rerunning the same query to prove that
+scope preservation, contradiction handling, and claim retirement improved.
 
-Raw cards and candidate claims remain untrusted until the distillation gate evaluates them.
+Domain or data sources:
 
-## Query + Self-Improve
+- Real CAR-T paper fixtures:
+  - Maude 2018, tisagenlecleucel in pediatric/young adult B-cell ALL
+    (PMID 29385370, DOI 10.1056/NEJMoa1709866)
+  - Neelapu 2017, axicabtagene ciloleucel in refractory large B-cell lymphoma
+    (PMID 29226797, DOI 10.1056/NEJMoa1707447)
+- Optional Semantic Scholar abstract search via `ingest_real_research.py`
+- Controlled AX-17 battery corpus for deterministic before/after
+  self-improvement evidence
 
-Queries read from the trusted Cognee graph. A critic scores the answer for scientific hygiene:
+Primary use case:
 
-- did it preserve source attribution?
-- did it preserve experimental scope?
-- did it include negative evidence?
-- did it avoid overgeneralizing?
-- did it retire contradicted claims?
+Literature-scale claim auditing: show which claims are supported, which are
+scope-limited, which conflict with negative evidence, and which should be
+retired or downgraded.
 
-The distillation gate's rejection reasons and the critic's notes are the
-feedback signal. `propose_skill_revision(feedback)` derives a stronger
-distiller skill from exactly those signals (and only those — unrelated
-feedback is a no-op), the skill is written to disk, and the next run is
-distilled with it. The improvement is a measured consequence of the skill
-change, not a hand-written before/after.
+What makes it stand out:
 
-## Lint
+- It separates tentative session memory from durable graph memory.
+- It fails loudly if Redis or Cognee are missing; no silent in-memory fallback.
+- Real-paper claims must pass span-level provenance validation before writing.
+- The before/after improvement is computed from graph state, not hardcoded.
+- The skill loop actually proposes and applies a revised distiller skill.
 
-The lint pass catches:
+## The Three Operations
 
-- missing source
-- missing scope condition
-- overgeneralized claim
-- contradiction
-- omitted negative result
-- duplicate claim
-- claim that should be retired
+### Ingest
 
-## Redis Usage
+What goes in:
 
-Redis stores:
+- Real paper cards containing title, abstract/source text, PubMed IDs, DOI,
+  URLs, and metadata
+- Candidate claims extracted from those cards
+- Agent run traces and raw intermediate observations
+- Rejected claims and distillation-gate reasons
 
-- raw paper cards
-- candidate claims
-- rejected claims and reasons
-- lint issues
-- critic feedback
-- run score history
+How it is captured:
 
-Redis is the lab scratchpad and quarantine layer.
+- `ingest_real_research.py` extracts candidate claims from real paper cards.
+- `source_spans.validate_claims_against_cards()` validates each claim against a
+  verbatim evidence span with deterministic offsets.
+- `RedisSessionStore.remember(payload, session_id=...)` stores raw/candidate
+  session memory in Redis.
+- `should_distill(claim, graph_state)` decides whether a candidate is promoted.
+- `CogneeTrustedGraphStore.remember(payload)` writes promoted trusted claims to
+  Cognee.
 
-## Cognee Usage
+Code entry point:
 
-Cognee stores:
+- `ingest_real_research.py`
+- `backend/storage.py`
+- `distillation_policy.py`
 
-- promoted hypotheses
-- evidence nodes
-- scope conditions
-- contradiction edges
-- retired claims
-- skill feedback and improvement proposals
+### Query + Self-improve
 
-Cognee is the trusted scientific graph.
+How users query the wiki:
+
+- Demo query path: `python3 demo.py`
+- Live Redis/Cognee proof path: `python3 cognee_redis_spike.py`
+- Programmatic path: `await backend.recall(query, session_id=...)` for Redis
+  session memory, or `await backend.recall(query)` for Cognee trusted graph
+  memory.
+
+Where feedback comes from:
+
+- Distillation-gate rejection reasons, such as missing scope or invalid
+  evidence span
+- Critic notes, such as overclaiming, omitted negative evidence, or ungrounded
+  answer
+- Lint issues from missing source/scope
+- Test/eval metrics computed from graph state
+
+How feedback updates the wiki:
+
+- `propose_skill_revision(feedback)` turns concrete gate/critic feedback into a
+  stronger distiller skill.
+- The proposed skill is written to
+  `my_skills/hypothesis_distiller/SKILL.proposed.md`.
+- The same cards are redistilled with the proposed skill.
+- More claims pass the gate, negative evidence is preserved, and contradicted
+  broad claims are retired.
+
+Code entry point:
+
+- `demo.py`
+- `distiller.py`
+- `critic.py`
+
+### Lint
+
+What "linting" means in this wiki:
+
+- Reject ungrounded claims with no source
+- Reject hypotheses with missing scope conditions
+- Reject real-paper claims whose evidence spans are absent or invalid
+- Detect contradictions where a promoted positive hypothesis is undercut by
+  negative or conditional evidence on the same outcome
+- Track claims that should be retired after stronger contrary evidence appears
+
+How it runs:
+
+- On ingest: provenance validation before `claims-out` is written
+- On promotion: `should_distill()` runs before Cognee writes
+- On query/demo: `lint_claims()` and `score_answer()` run on demand
+
+Code entry point:
+
+- `source_spans.py`
+- `distillation_policy.py`
+- `critic.py`
 
 ## Self-Improvement Evidence
 
-The loop is executed, not scripted. `demo.py` runs the distiller with the
-real v1 skill, gates every claim through `should_distill`, derives the
-critic score from graph state, proposes a revised skill **from that
-feedback**, writes it to `my_skills/hypothesis_distiller/SKILL.proposed.md`,
-and re-runs with it.
+The live real-data path proves that real CAR-T paper claims can be extracted
+and provenance-validated, and that Redis/Cognee are actually used. The
+self-improvement evidence uses a controlled AX-17 corpus so the before/after
+run is deterministic and judge-repeatable.
+
+Real-data ingest proof:
 
 ```text
-Run 1 (SKILL.md / v1)
-  distiller drops scope -> gate rejects all 4 claims
-  answer (from quarantine): AX-17 improves battery stability and should be
-    used for high-temperature cells.
+python3 ingest_real_research.py \
+  --from-cards data/maude_2018_cart.json \
+  --claims-out /tmp/maude_claims.json \
+  --extractor curated
 
-Self-improvement
-  feedback = 4 gate rejections + 2 critic notes
-  propose_skill_revision(feedback) -> SKILL.proposed.md (scope-preserving)
+paper_cards: 1 -> data/maude_2018_cart.json
+claims:      8 -> /tmp/maude_claims.json
 
-Run 2 (SKILL.proposed.md / applied)
-  scope preserved -> gate promotes 4 claims, 3 contradictions surfaced,
-    broad claim retired
-  answer: AX-17 is supported only under 25C, coin cell, electrolyte E1;
-    high-temperature, E2, and pouch-cell evidence is negative or
-    non-replicating.
+python3 ingest_real_research.py \
+  --from-cards data/neelapu_2017_axi_cel.json \
+  --claims-out /tmp/neelapu_claims.json \
+  --extractor curated
+
+paper_cards: 1 -> data/neelapu_2017_axi_cel.json
+claims:      6 -> /tmp/neelapu_claims.json
 ```
 
-Score (every value computed from graph state; no hardcoded numbers):
+Live Redis/Cognee proof:
 
 ```text
-retrieval_score:        0.70 -> 0.70
-hypothesis_hygiene:     0.15 -> 1.00
-scope_errors:           1    -> 0
-contradictions_caught:  0    -> 3
-retired_claims:         0    -> 1
+Session backend: RedisSessionStore
+Trusted graph backend: CogneeTrustedGraphStore
+session write ok
+graph write ok
+session recall returned data
+graph recall returned data
 ```
 
-Retrieval is deliberately flat: the improved answer is more cautious, not
-less retrieved, which closes the obvious "you just retrieved less" objection.
+### Baseline Run
 
+Query / task:
+
+Should AX-17 be used for high-temperature battery cells?
+
+Result:
+
+```text
+AX-17 improves battery stability and should be used for high-temperature cells.
+```
+
+Score:
+
+```text
+retrieval_score:       0.70
+hypothesis_hygiene:    0.15
+scope_errors:          1
+contradictions_caught: 0
+retired_claims:        0
+```
+
+Recorded feedback:
+
+```text
+error_type: missing_scope
+error_message: v1 distiller dropped conditions, so the gate rejected all 4 claims
+feedback:
+  - claim_paper_a: hypothesis missing scope conditions
+  - claim_paper_b: hypothesis missing scope conditions
+  - claim_paper_c: hypothesis missing scope conditions
+  - claim_paper_d: hypothesis missing scope conditions
+  - answer not grounded in any trusted claim
+  - overclaimed high-temperature use
+success_score: 0.15
+```
+
+### Improved Run
+
+Query / task:
+
+Should AX-17 be used for high-temperature battery cells?
+
+Result:
+
+```text
+AX-17 is supported only under 25C, coin cell, electrolyte E1; high-temperature,
+E2, and pouch-cell evidence is negative or non-replicating.
+```
+
+Score:
+
+```text
+retrieval_score:       0.70
+hypothesis_hygiene:    1.00
+scope_errors:          0
+contradictions_caught: 3
+retired_claims:        1
+```
+
+What changed in the wiki between runs:
+
+Before:
+
+- v1 skill erased experimental scope
+- all four distilled claims were rejected
+- the trusted graph was empty
+- the answer overclaimed from untrusted session memory
+
+After:
+
+- critic/gate feedback produced `SKILL.proposed.md`
+- v2-style skill preserved temperature, cell format, electrolyte, and negative
+  evidence
+- four claims were promoted into the trusted graph
+- three contradictory/negative findings were surfaced
+- one broad claim was retired
+
+Before / after:
+
+```text
+retrieval_score:       0.70 -> 0.70
+hypothesis_hygiene:    0.15 -> 1.00
+scope_errors:          1    -> 0
+contradictions_caught: 0    -> 3
+retired_claims:        0    -> 1
+```
+
+Retrieval is deliberately flat. The improved answer is more careful, not less
+retrieved, which avoids the obvious failure mode of "it improved by saying
+less."
+
+## Architecture
+
+```text
+[real paper cards / agent turns / run traces]
+        |
+        v
+[ Redis - session memory quarantine ]
+        |
+        | source-span validation + distillation gate
+        v
+[ Cognee - permanent trusted graph ]
+        |
+        v
+[ recall / answer generation ]
+        |
+        v
+[ critic + lint feedback -> skill improvement ]
+        |
+        v
+[ revised distiller skill -> re-ingest / re-query ]
+```
+
+Components:
+
+- `ingest_real_research.py`: fetch/use real paper cards and extract claims
+- `source_spans.py`: validate evidence spans and offsets
+- `backend/storage.py`: Redis session store and Cognee trusted graph adapter
+- `distillation_policy.py`: promotion gate
+- `distiller.py`: skill-driven claim distiller and skill proposer
+- `critic.py`: graph-derived scoring and lint
+- `demo.py`: deterministic self-improvement run
+- `cognee_redis_spike.py`: live Redis/Cognee proof
+
+## Redis-as-session-memory
+
+What the agent writes into Redis:
+
+- raw paper cards
+- candidate claims
+- rejected claims and rejection reasons
+- critic feedback
+- run-specific observations and traces
+
+How and when content is distilled into the graph:
+
+- Candidate claims first live in Redis under a session id.
+- The distillation gate checks attribution, evidence-span validity, scope,
+  duplication, and conflicts.
+- Only promoted claims are written to Cognee.
+
+What stays in Redis vs. what gets promoted:
+
+- Stays in Redis: raw notes, raw cards, untrusted candidate claims, rejected
+  claims, failed spans, run-local feedback.
+- Promoted to Cognee: attributed, scoped, validated claims; negative evidence;
+  contradiction/retirement-relevant claims.
+
+How distillation quality improved between baseline and improved run:
+
+- Baseline skill dropped scope, so every claim was rejected.
+- Improved skill preserved scope and negative evidence, so the graph gained
+  usable trusted claims and the answer became conditional instead of universal.
+
+## Agents / Skills
+
+Skill path(s):
+
+- `my_skills/hypothesis_distiller/SKILL.md`
+- `my_skills/hypothesis_distiller/SKILL.v2.md`
+- `my_skills/hypothesis_distiller/SKILL.proposed.md`
+
+Roles:
+
+- Ingestor: `ingest_real_research.py`, `research_claim_extractor.py`,
+  `source_spans.py`
+- Querier: `demo.py`, `backend.recall(...)`
+- Linter: `source_spans.py`, `critic.py`, `distillation_policy.py`
+- Critic: `critic.py`, `distiller.propose_skill_revision(...)`
+
+## Reproduction
+
+Commands to reproduce the judged demo:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+
+python3 -m pytest -q
+
+python3 ingest_real_research.py \
+  --from-cards data/maude_2018_cart.json \
+  --claims-out /tmp/maude_claims.json \
+  --extractor curated
+
+python3 ingest_real_research.py \
+  --from-cards data/neelapu_2017_axi_cel.json \
+  --claims-out /tmp/neelapu_claims.json \
+  --extractor curated
+
+python3 demo.py
+```
+
+Commands to reproduce the live Redis/Cognee proof:
+
+```bash
+brew services start redis
+
+export REDIS_URL=redis://localhost:6379
+export LLM_API_KEY=...
+export COGNEE_DATASET=hypothesis-wiki-trusted
+
+python3 cognee_redis_spike.py
+```
+
+Environment variables required:
+
+```text
+LLM_API_KEY
+REDIS_URL
+COGNEE_DATASET
+```
+
+Optional:
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL
+SEMANTIC_SCHOLAR_API_KEY
+COGNEE_URL
+COGNEE_API_KEY
+```
+
+## Demo
+
+Live demo link:
+
+Local instructions above. A screen recording can show the commands in the same
+order: real-paper ingest, tests, self-improvement demo, live Redis/Cognee spike.
+
+3-minute pitch outline:
+
+1. Problem / idea
+   - Scientific wikis get bigger, but not necessarily more correct.
+   - Hypothesis Wiki treats raw claims as untrusted until they pass provenance
+     and scope checks.
+2. Ingest demo
+   - Run real CAR-T ingest on Maude 2018 and Neelapu 2017.
+   - Show 14 validated real-paper claims with PubMed/DOI/evidence spans.
+3. Query demo before improvement
+   - Run `python3 demo.py`.
+   - Show v1 answer overclaims because the distiller erased scope.
+4. Self-improve step
+   - Show feedback: 4 gate rejections plus critic notes.
+   - Show `SKILL.proposed.md` generated from that feedback.
+5. Query demo after improvement
+   - Show the improved answer preserves scope and negative evidence.
+   - Show hygiene 0.15 -> 1.00, contradictions 0 -> 3, retired claims 0 -> 1.
+6. What is next
+   - Replace the controlled AX-17 corpus with an external benchmark harness
+     using empirical ML/reproducibility datasets.
+   - Gate future skill revisions on held-out accuracy, not internal score alone.
+
+## Links
+
+Repo:
+
+https://github.com/gorajing/hypothesis-wiki
+
+Slides / writeup:
+
+TBD
+
+Anything else:
+
+- `docs/COGNEE_REDIS_SPIKE.md`
+- `docs/REAL_RESEARCH_INGESTION.md`
+- `docs/PROVENANCE_CONTRACT.md`
