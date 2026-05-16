@@ -2,60 +2,53 @@ import asyncio
 import json
 from datetime import datetime, timezone
 
+from backend.storage import create_memory_backend, decision_to_dict
+
 
 RUN_ID = "hypothesis-wiki-spike"
 
 
 async def main() -> None:
-    try:
-        import cognee
-    except ImportError as exc:
-        raise SystemExit(
-            "cognee is not installed in this environment. "
-            "Install the hackathon dependencies, then rerun this spike."
-        ) from exc
-
     raw_candidate = {
-        "type": "candidate_claim",
         "id": "spike_candidate_001",
+        "kind": "hypothesis",
         "text": "AX-17 improves retention below 40C with electrolyte E1.",
         "source": "spike_paper",
+        "scope_conditions": ["below 40C", "electrolyte E1"],
+        "outcome": "retention",
+        "direction": "improves",
         "status": "redis_quarantine",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    promoted_claim = {
-        "type": "trusted_hypothesis",
-        "id": "spike_trusted_001",
-        "text": "AX-17 evidence is scoped to below 40C with electrolyte E1.",
-        "source": "spike_paper",
-        "scope_conditions": ["below 40C", "electrolyte E1"],
-        "status": "trusted_graph",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
+    backend = await create_memory_backend()
+    print(f"Session backend: {backend.session_store.__class__.__name__}")
+    print(f"Trusted graph backend: {backend.trusted_graph.__class__.__name__}")
 
     print("Writing candidate claim to session memory...")
-    await cognee.remember(json.dumps(raw_candidate), session_id=RUN_ID)
+    await backend.remember(raw_candidate, session_id=RUN_ID)
     print("session write ok")
 
-    print("Writing promoted claim to permanent graph...")
-    await cognee.remember(json.dumps(promoted_claim))
+    print("Promoting candidate through distillation gate...")
+    decision = await backend.promote_candidate(raw_candidate)
+    print(json.dumps(decision_to_dict(decision), sort_keys=True))
+    if not decision.promote:
+        raise SystemExit("candidate was not promoted into the trusted graph")
     print("graph write ok")
 
     print("Recalling from session memory...")
-    session_result = await cognee.recall("AX-17 retention E1", session_id=RUN_ID)
+    session_result = await backend.recall("AX-17 retention E1", session_id=RUN_ID)
     print("session recall returned data")
     print(_preview(session_result))
 
     print("Recalling from graph memory...")
-    graph_result = await cognee.recall("AX-17 scoped evidence")
+    graph_result = await backend.recall("AX-17 retention E1")
     print("graph recall returned data")
     print(_preview(graph_result))
 
     print()
-    print("Spike complete. If session recall and graph recall show distinct behavior,")
-    print("use Cognee session memory as the Redis quarantine. If not, use direct redis-py")
-    print("for quarantine and reserve Cognee for promoted claims.")
+    print("Spike complete. Session memory is routed separately from trusted graph memory.")
+    print("Set REDIS_URL for Redis quarantine and COGNEE_ENABLED=1 for Cognee graph writes.")
 
 
 def _preview(value) -> str:
@@ -67,4 +60,3 @@ def _preview(value) -> str:
 
 if __name__ == "__main__":
     asyncio.run(main())
-
