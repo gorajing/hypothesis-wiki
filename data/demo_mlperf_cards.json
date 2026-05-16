@@ -1,0 +1,50 @@
+[
+  {
+    "paper_id": "mlperf_demo_a",
+    "title": "MI325X Llama2-70B Offline throughput result",
+    "year": 2025,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "abstract": "MLPerf Inference v5.1 reports QuantaGrid D74A-7U with 8x AMD Instinct MI325X reached 34,520.4 samples per second on llama2-70b-99 in the Offline scenario.",
+    "finding": "QuantaGrid D74A-7U with 8x AMD Instinct MI325X reached 34,520.4 samples/s on llama2-70b-99.",
+    "conditions": ["MLPerf Inference v5.1", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI325X"],
+    "outcome": "llama2-70b throughput",
+    "direction": "improves",
+    "result_type": "positive"
+  },
+  {
+    "paper_id": "mlperf_demo_b",
+    "title": "MI325X Llama2-70B Server throughput result",
+    "year": 2025,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "abstract": "MLPerf Inference v5.1 reports QuantaGrid D74A-7U with 8x AMD Instinct MI325X reached 32,027.6 scheduled samples per second on llama2-70b-99 in the Server scenario.",
+    "finding": "The same MI325X system reached 32,027.6 scheduled samples/s on llama2-70b-99 in the Server scenario.",
+    "conditions": ["MLPerf Inference v5.1", "llama2-70b-99", "Server scenario", "8x AMD Instinct MI325X"],
+    "outcome": "llama2-70b throughput",
+    "direction": "conditional",
+    "result_type": "conditional"
+  },
+  {
+    "paper_id": "mlperf_demo_c",
+    "title": "MI300X Llama2-70B Offline throughput result",
+    "year": 2025,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "abstract": "MLPerf Inference v5.1 reports AS-8125GS-TNMR2 with 8x AMD Instinct MI300X reached 27,803.9 samples per second on llama2-70b-99 in the Offline scenario.",
+    "finding": "The MI300X system reached 27,803.9 samples/s on llama2-70b-99 in the Offline scenario.",
+    "conditions": ["MLPerf Inference v5.1", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI300X"],
+    "outcome": "llama2-70b throughput",
+    "direction": "conditional",
+    "result_type": "conditional"
+  },
+  {
+    "paper_id": "mlperf_demo_d",
+    "title": "Offline benchmark results do not directly transfer to Server scenario claims",
+    "year": 2025,
+    "url": "https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json",
+    "abstract": "MLPerf Inference v5.1 reports separate Offline and Server scenarios; the Server result for the MI325X Llama2-70B system is lower than its Offline samples per second result.",
+    "finding": "Offline throughput should not be generalized to Server serving workloads because MLPerf reports a separate lower Server result.",
+    "conditions": ["MLPerf Inference v5.1", "Offline scenario", "Server scenario", "serving workload distinction"],
+    "outcome": "llama2-70b throughput",
+    "direction": "no_benefit",
+    "result_type": "negative"
+  }
+]

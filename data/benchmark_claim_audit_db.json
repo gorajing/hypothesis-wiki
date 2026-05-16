@@ -1,17 +1,14 @@
 {
-  "database_name": "hypothesis_wiki_science_claim_audit_db",
+  "database_name": "benchmark_claim_wiki_audit_db",
   "version": 1,
   "description": "A small AI benchmark claim audit database: MLPerf Inference v5.1 result claims with source URLs, verbatim evidence spans, benchmark scope conditions, scenario labels, and distillation-gate promotion decisions.",
   "summary": {
-    "paper_count": 6,
+    "source_card_count": 6,
     "claim_count": 6,
     "provenance_valid_claims": 6,
     "trusted_graph_ready_claims": 6,
     "offline_benchmark_claims": 3,
     "server_benchmark_claims": 3,
-    "safety_risk_claims": 0,
-    "supported_efficacy_claims": 0,
-    "supporting_evidence_claims": 0,
     "promotion_status_counts": {
       "promote": 6
     },
@@ -20,7 +17,7 @@
       "server_benchmark_result": 3
     }
   },
-  "source_papers": [
+  "source_cards": [
     {
       "paper_id": "mlperf_v5_1_0001_mi300x_llama2_offline",
       "title": "MLPerf Inference v5.1 result 5.1-0001: Llama2-70B Offline on 8x AMD Instinct MI300X",

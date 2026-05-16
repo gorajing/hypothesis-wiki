@@ -1,7 +1,7 @@
 from .storage import (
     BackendUnavailableError,
+    BenchmarkMemoryBackend,
     CogneeTrustedGraphStore,
-    HypothesisMemoryBackend,
     InMemorySessionStore,
     InMemoryTrustedGraphStore,
     RedisSessionStore,
@@ -11,8 +11,8 @@ from .storage import (
 
 __all__ = [
     "BackendUnavailableError",
+    "BenchmarkMemoryBackend",
     "CogneeTrustedGraphStore",
-    "HypothesisMemoryBackend",
     "InMemorySessionStore",
     "InMemoryTrustedGraphStore",
     "RedisSessionStore",

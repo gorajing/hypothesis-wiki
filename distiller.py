@@ -1,9 +1,9 @@
 """Executable hypothesis distiller.
 
 The distiller's behavior is a function of the *skill text* it is given.
-A weak skill (v1) drops experimental scope and flattens negative or
-conditional findings into a universal positive claim. A scope-preserving
-skill (v2) keeps conditions and records negatives as first-class evidence.
+A weak skill (v1) drops benchmark scope and flattens negative or conditional
+findings into a universal positive claim. A scope-preserving skill (v2) keeps
+conditions and records contrary results as first-class evidence.
 
 `propose_skill_revision` closes the loop: it derives a stronger skill
 *from critic feedback*, which the caller then applies by re-running the
@@ -12,12 +12,10 @@ distiller with the returned text.
 
 # Machine-detectable capability phrases. The curated SKILL.v2.md carries
 # these verbatim; SKILL.md (v1) deliberately does not.
-_SCOPE_MARKER = "preserve experimental condition"
-_NEGATIVE_MARKER = "negative results as first-class"
-
+_SCOPE_MARKER = "preserve benchmark condition"
 BASE_SKILL = (
     "# Hypothesis Distiller v1\n\n"
-    "Extract the main scientific finding from each paper as a concise "
+    "Extract the main benchmark finding from each source card as a concise "
     "hypothesis. Prefer short, reusable statements.\n"
 )
 
@@ -34,14 +32,14 @@ def _skill_preserves_scope(skill_text: str) -> bool:
 
 
 def distill(card: dict, skill_text: str) -> dict:
-    """Turn a paper card into a candidate claim, per the given skill."""
+    """Turn a source card into a candidate claim, per the given skill."""
     base = {
         "id": f"claim_{card['paper_id']}",
         "text": card["finding"],
         "source": card["paper_id"],
         "source_url": card["url"],
         "outcome": card["outcome"],
-        "evidence_type": "paper_card",
+        "evidence_type": "source_card",
         "status": "candidate",
         "confidence": 0.62,
     }
@@ -69,7 +67,12 @@ def propose_skill_revision(feedback: list[str]) -> str:
     """
     notes = " ".join(feedback).lower()
     wants_scope = "scope" in notes or "condition" in notes
-    wants_negative = "negative" in notes or "contradict" in notes
+    wants_negative = (
+        "negative" in notes
+        or "contradict" in notes
+        or "overclaim" in notes
+        or "serving workload" in notes
+    )
 
     if not (wants_scope or wants_negative):
         return BASE_SKILL
@@ -77,12 +80,12 @@ def propose_skill_revision(feedback: list[str]) -> str:
     lines = ["# Hypothesis Distiller v2 (revised from critic feedback)", "", "Rules:", ""]
     if wants_scope:
         lines.append(
-            "1. Preserve experimental conditions such as temperature, cell "
-            "format, reagent, dosage, and assay."
+            "1. Preserve benchmark conditions such as benchmark, hardware, "
+            "model, scenario, metric, division, dataset, and run setting."
         )
         lines.append("2. Never collapse a conditional finding into a universal claim.")
     if wants_negative:
-        lines.append("3. Promote negative results as first-class evidence.")
+        lines.append("3. Promote contrary or scenario-specific results as first-class evidence.")
         lines.append("4. Mark contradictions explicitly instead of smoothing them away.")
-    lines.append("5. Include the source paper ID on every claim.")
+    lines.append("5. Include the source card ID on every claim.")
     return "\n".join(lines) + "\n"

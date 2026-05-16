@@ -8,8 +8,7 @@ from source_spans import validate_claim_contract, validate_claims_against_cards
 
 ROOT = Path(__file__).parent.parent
 REAL_FIXTURES = [
-    ("maude_2018_cart.json", "maude_2018_claims.json"),
-    ("neelapu_2017_axi_cel.json", "neelapu_2017_claims.json"),
+    ("mlperf_v5_1_cards.json", "mlperf_v5_1_claims.json"),
 ]
 
 
@@ -40,7 +39,7 @@ def test_curated_extractor_regenerates_committed_real_claims():
 
 
 def test_contract_reports_missing_required_provenance_fields():
-    claim = _read_data("neelapu_2017_claims.json")[0]
+    claim = _read_data("mlperf_v5_1_claims.json")[0]
     malformed = {**claim, "evidence_span_valid": False}
     del malformed["paper_title"]
 
@@ -56,9 +55,9 @@ def test_distillation_rejects_unvalidated_real_claim_span():
         "id": "claim_unsupported",
         "kind": "hypothesis",
         "text": "Unsupported claim",
-        "source": "maude_2018_cart",
-        "outcome": "overall remission rate",
-        "scope_conditions": ["within 3 months"],
+        "source": "mlperf_v5_1_0001_mi300x_llama2_offline",
+        "outcome": "llama2-70b-99 throughput",
+        "scope_conditions": ["MLPerf Inference v5.1", "Offline scenario"],
         "evidence_span": "not a real quote",
     }
 

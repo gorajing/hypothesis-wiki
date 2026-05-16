@@ -28,11 +28,14 @@ EVIDENCE_PATTERNS = [
     "whereas",
     "however",
     "observed",
-    "occurred",
-    "remission",
-    "survival",
-    "adverse events",
-    "response",
+    "reports",
+    "result",
+    "benchmark",
+    "throughput",
+    "samples per second",
+    "scheduled samples",
+    "offline",
+    "server",
     "%",
 ]
 
@@ -55,7 +58,7 @@ def extract_claims_from_cards(
 
 
 def extract_claims_heuristic(card: dict[str, Any]) -> list[dict[str, Any]]:
-    """Extract source-grounded claims from a paper card without model calls."""
+    """Extract source-grounded claims from a source card without model calls."""
     abstract = source_text_for_card(card).strip()
     if not abstract:
         return []
@@ -123,7 +126,7 @@ def extract_claims_curated(card: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def extract_claims_openai(card: dict[str, Any], *, model: str | None = None) -> list[dict[str, Any]]:
-    """Use OpenAI structured outputs to extract claims from one real paper card."""
+    """Use OpenAI structured outputs to extract claims from one source card."""
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is required for extractor='openai'")
@@ -132,15 +135,15 @@ def extract_claims_openai(card: dict[str, Any], *, model: str | None = None) -> 
     payload = {
         "model": model,
         "instructions": (
-            "Extract source-grounded scientific claims from the paper card. "
-            "Use only the title and abstract. Preserve scope conditions, negative "
+            "Extract source-grounded benchmark claims from the source card. "
+        "Use only the title and source text. Preserve scope conditions, negative "
             "results, and uncertainty. Do not infer beyond the abstract."
         ),
         "input": json.dumps(card, ensure_ascii=True),
         "text": {
             "format": {
                 "type": "json_schema",
-                "name": "scientific_claim_extraction",
+                "name": "benchmark_claim_extraction",
                 "strict": True,
                 "schema": {
                     "type": "object",
@@ -268,8 +271,12 @@ def _extract_conditions(sentence: str) -> list[str]:
         r"\b(?:below|above|under|over|at)\s+[A-Za-z0-9 ./%+-]{1,40}",
         r"\bwith\s+[A-Za-z0-9 ./%+-]{1,60}",
         r"\busing\s+[A-Za-z0-9 ./%+-]{1,60}",
-        r"\bin\s+(?:coin|pouch|full|half)[- ]?cells?\b",
-        r"\b\d+(?:\.\d+)?\s?(?:C|K|mA h g-1|mAh g-1|%)\b",
+        r"\bMLPerf\s+Inference\s+v\d+(?:\.\d+)?\b",
+        r"\b(?:Offline|Server)\s+scenario\b",
+        r"\b(?:llama2-70b-99|mixtral-8x7b)\b",
+        r"\b\d+x\s+(?:AMD\s+)?Instinct\s+MI\d+X\b",
+        r"\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:scheduled\s+)?samples\s+per\s+second\b",
+        r"\b\d+(?:\.\d+)?\s?%\b",
     ]
     conditions: list[str] = []
     for pattern in patterns:
@@ -283,20 +290,12 @@ def _extract_conditions(sentence: str) -> list[str]:
 def _infer_outcome(sentence: str, card: dict[str, Any]) -> str:
     lower = sentence.lower()
     outcomes = [
-        "overall remission rate",
-        "minimal residual disease",
-        "event-free survival",
-        "overall survival",
-        "duration of remission",
-        "cytokine release syndrome",
-        "neurologic events",
-        "adverse events",
-        "capacity retention",
-        "cycle life",
-        "thermal stability",
-        "coulombic efficiency",
-        "degradation",
-        "conductivity",
+        "llama2-70b-99 throughput",
+        "mixtral-8x7b throughput",
+        "result samples per second",
+        "scheduled samples per second",
+        "benchmark throughput",
+        "scenario-specific throughput",
         "performance",
     ]
     for outcome in outcomes:

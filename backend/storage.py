@@ -9,7 +9,7 @@ from typing import Any, Protocol
 from distillation_policy import DistillDecision, should_distill
 
 
-SESSION_KEY_PREFIX = "hypothesis-wiki:session"
+SESSION_KEY_PREFIX = "benchmark-claim-wiki:session"
 
 
 class BackendUnavailableError(RuntimeError):
@@ -96,7 +96,7 @@ class CogneeTrustedGraphStore:
         return _normalize_recall(await self.cognee.recall(query, **kwargs))
 
 
-class HypothesisMemoryBackend:
+class BenchmarkMemoryBackend:
     """Route untrusted session events separately from trusted graph claims."""
 
     def __init__(self, session_store: SessionStore, trusted_graph: TrustedGraphStore) -> None:
@@ -155,7 +155,7 @@ async def create_memory_backend(
     cognee_url: str | None = None,
     cognee_api_key: str | None = None,
     cognee_dataset_name: str | None = None,
-) -> HypothesisMemoryBackend:
+) -> BenchmarkMemoryBackend:
     session_store = await _create_session_store(redis_url)
     trusted_graph = await _create_trusted_graph(
         use_cognee,
@@ -163,11 +163,11 @@ async def create_memory_backend(
         cognee_api_key=cognee_api_key,
         dataset_name=cognee_dataset_name,
     )
-    return HypothesisMemoryBackend(session_store, trusted_graph)
+    return BenchmarkMemoryBackend(session_store, trusted_graph)
 
 
-def create_in_memory_backend() -> HypothesisMemoryBackend:
-    return HypothesisMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
+def create_in_memory_backend() -> BenchmarkMemoryBackend:
+    return BenchmarkMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
 
 
 async def _create_session_store(redis_url: str | None) -> SessionStore:

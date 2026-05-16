@@ -8,7 +8,7 @@ from pathlib import Path
 
 from demo import DemoGraphState, claim_from_card, compose_answer
 
-CARDS = {c["paper_id"]: c for c in json.loads((Path(__file__).parent.parent / "data" / "paper_cards.json").read_text())}
+CARDS = {c["paper_id"]: c for c in json.loads((Path(__file__).parent.parent / "data" / "demo_mlperf_cards.json").read_text())}
 
 
 def _trusted(graph, pid):
@@ -16,17 +16,17 @@ def _trusted(graph, pid):
 
 
 def test_empty_graph_yields_ungrounded_overclaim():
-    assert "should be used for high-temperature" in compose_answer(DemoGraphState())
+    assert "all Llama2 serving workloads" in compose_answer(DemoGraphState())
 
 
 def test_supporting_scope_excludes_negative_claim_conditions():
     graph = DemoGraphState()
-    _trusted(graph, "paper_a")  # positive hypothesis: 25C / coin cell / E1
-    _trusted(graph, "paper_d")  # negative_result: pouch cell / high-temp
+    _trusted(graph, "mlperf_demo_a")  # positive hypothesis: MI325X / Llama2 / Offline
+    _trusted(graph, "mlperf_demo_d")  # negative_result: Offline does not generalize
     answer = compose_answer(graph).lower()
 
     # Scoped support is real and scorer-valid.
-    assert "25c" in answer and "electrolyte e1" in answer
-    assert "negative or non-replicating" in answer
+    assert "mi325x" in answer and "offline" in answer
+    assert "do not generalize" in answer
     # Negative-claim conditions must NOT be presented as supporting scope.
-    assert "pouch cell" not in answer
+    assert "serving workload distinction" not in answer

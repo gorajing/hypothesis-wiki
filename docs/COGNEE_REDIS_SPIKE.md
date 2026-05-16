@@ -25,7 +25,7 @@ Then configure:
 ```bash
 export REDIS_URL=redis://localhost:6379
 export LLM_API_KEY=...  # or set OPENAI_API_KEY
-export COGNEE_DATASET=hypothesis-wiki-trusted
+export COGNEE_DATASET=benchmark-claim-wiki-trusted
 ```
 
 For Cognee Cloud, also set:

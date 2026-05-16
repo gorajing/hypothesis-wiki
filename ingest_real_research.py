@@ -16,13 +16,13 @@ SEMANTIC_SCHOLAR_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/se
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fetch real research papers and extract wiki claims.")
+    parser = argparse.ArgumentParser(description="Fetch source records and extract wiki claims.")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--query", help="Semantic Scholar query string")
     source.add_argument("--queries-file", help="JSON file with {topic, queries, limit_per_query}")
-    source.add_argument("--from-cards", help="Use an existing paper_cards JSON file")
-    parser.add_argument("--limit", type=int, default=8, help="Maximum papers per query")
-    parser.add_argument("--cards-out", default="data/real_paper_cards.json")
+    source.add_argument("--from-cards", help="Use an existing source-card JSON file")
+    parser.add_argument("--limit", type=int, default=8, help="Maximum source records per query")
+    parser.add_argument("--cards-out", default="data/real_benchmark_cards.json")
     parser.add_argument("--claims-out", default="data/real_claims.json")
     parser.add_argument("--extractor", choices=["heuristic", "curated", "openai", "none"], default="heuristic")
     parser.add_argument("--model", help="OpenAI model for --extractor openai")
@@ -44,7 +44,7 @@ def main() -> None:
     _write_json(Path(args.claims_out), claims)
 
     cards_location = args.from_cards or args.cards_out
-    print(f"paper_cards: {len(cards)} -> {cards_location}")
+    print(f"source_cards: {len(cards)} -> {cards_location}")
     print(f"claims:      {len(claims)} -> {args.claims_out}")
     print()
     print("Next: feed cards/claims into Redis session memory, then run should_distill() before Cognee promotion.")

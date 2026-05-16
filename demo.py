@@ -6,7 +6,7 @@ from distillation_policy import should_distill
 from distiller import distill, propose_skill_revision
 
 ROOT = Path(__file__).parent
-DATA_PATH = ROOT / "data" / "paper_cards.json"
+DATA_PATH = ROOT / "data" / "demo_mlperf_cards.json"
 SKILL_DIR = ROOT / "my_skills" / "hypothesis_distiller"
 V1_PATH = SKILL_DIR / "SKILL.md"
 PROPOSED_PATH = SKILL_DIR / "SKILL.proposed.md"
@@ -62,7 +62,7 @@ def claim_from_card(card: dict) -> dict:
         "scope_conditions": card["conditions"],
         "outcome": card["outcome"],
         "direction": card["direction"],
-        "evidence_type": "paper_card",
+        "evidence_type": "source_card",
         "status": "candidate",
         "confidence": 0.62,
     }
@@ -94,7 +94,7 @@ def compose_answer(graph: DemoGraphState) -> str:
     """
     trusted = graph.trusted_graph
     if not trusted:
-        return "AX-17 improves battery stability and should be used for high-temperature cells."
+        return "MI325X delivers top Llama2 throughput and should be used for all Llama2 serving workloads."
 
     support_scopes = sorted(
         {
@@ -111,11 +111,11 @@ def compose_answer(graph: DemoGraphState) -> str:
     )
 
     if support_scopes:
-        head = f"AX-17 is supported only under {', '.join(support_scopes)}"
+        head = f"MI325X Llama2 performance is supported only under {', '.join(support_scopes)}"
     else:
-        head = "AX-17 is not supported as a general high-temperature additive"
+        head = "MI325X Llama2 performance is scenario-specific"
     if has_negative:
-        return head + "; high-temperature, E2, and pouch-cell evidence is negative or non-replicating."
+        return head + "; Offline results do not generalize to Server serving workloads because MLPerf reports a separate lower Server result."
     return head + "."
 
 
@@ -135,10 +135,10 @@ def main() -> None:
     v1_skill = V1_PATH.read_text()
     graph = DemoGraphState()
 
-    print("Hypothesis Wiki demo")
+    print("Benchmark Claim Wiki demo")
     print("=" * 38)
     print()
-    print("Research question: Should AX-17 be used for high-temperature battery cells?")
+    print("Research question: Can the top MLPerf Offline Llama2 result be generalized to all serving workloads?")
     print()
 
     # ---- Run 1: weak v1 distiller -------------------------------------------

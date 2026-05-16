@@ -51,12 +51,17 @@ def score_answer(answer: str, graph) -> ScoreBreakdown:
     text = answer.lower()
     notes: list[str] = []
 
-    has_scope = ("below 40c" in text or "25c" in text) and "e1" in text
+    has_scope = (
+        "mlperf" in text
+        and "offline" in text
+        and "server" in text
+        and ("mi325x" in text or "mi300x" in text)
+    )
     has_negative = any(
         term in text
-        for term in ["negative", "no benefit", "degradation", "non-replicating"]
+        for term in ["not general", "do not generalize", "lower", "scenario-specific", "separate"]
     )
-    overclaims = "should be used for high-temperature" in text and "not" not in text
+    overclaims = "all llama2 serving workloads" in text and "not" not in text
 
     contradictions = _count_contradictions(graph)
     retired = len(graph.retirements)
@@ -73,9 +78,9 @@ def score_answer(answer: str, graph) -> ScoreBreakdown:
         scope_errors += 1
         notes.append("omitted negative/contradicting evidence in the trusted graph")
     if overclaims:
-        notes.append("overclaimed high-temperature use")
+        notes.append("overclaimed offline throughput for serving workloads")
 
-    addresses_question = "ax-17" in text
+    addresses_question = "llama2" in text or "mlperf" in text
     if not grounded_in_graph:
         # Vacuous-truth guard: an answer with no trusted backing earns no
         # scope/negative credit just because the graph is empty.

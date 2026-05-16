@@ -7,8 +7,8 @@ import pytest
 
 from backend.storage import (
     BackendUnavailableError,
+    BenchmarkMemoryBackend,
     CogneeTrustedGraphStore,
-    HypothesisMemoryBackend,
     InMemorySessionStore,
     InMemoryTrustedGraphStore,
     RedisSessionStore,
@@ -23,13 +23,13 @@ def run(coro):
 
 def _claim(**overrides):
     claim = {
-        "id": "claim_ax17",
-        "kind": "hypothesis",
-        "text": "AX-17 improves retention below 40C with electrolyte E1.",
-        "source": "paper_a",
-        "scope_conditions": ["below 40C", "electrolyte E1"],
-        "outcome": "retention",
-        "direction": "improves",
+        "id": "claim_mlperf_mi325x",
+        "kind": "evidence",
+        "text": "MI325X reached 34,520.4 samples/s on llama2-70b-99 in MLPerf Offline.",
+        "source": "mlperf_v5_1",
+        "scope_conditions": ["MLPerf Inference v5.1", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI325X"],
+        "outcome": "llama2-70b throughput",
+        "direction": "observes",
         "status": "candidate",
     }
     claim.update(overrides)
@@ -37,19 +37,19 @@ def _claim(**overrides):
 
 
 def test_session_writes_are_quarantined_from_trusted_graph():
-    backend = HypothesisMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
+    backend = BenchmarkMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
     candidate = _claim()
 
     run(backend.remember(candidate, session_id="run_001"))
 
-    assert run(backend.recall("AX-17", session_id="run_001")) == [candidate]
-    assert run(backend.recall("AX-17")) == []
+    assert run(backend.recall("MI325X", session_id="run_001")) == [candidate]
+    assert run(backend.recall("MI325X")) == []
     assert backend.trusted_claims == []
 
 
 def test_promote_candidate_runs_distillation_gate_before_graph_write():
-    backend = HypothesisMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
-    rejected = _claim(id="claim_missing_scope", scope_conditions=[])
+    backend = BenchmarkMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
+    rejected = _claim(id="claim_missing_scope", kind="hypothesis", direction="improves", scope_conditions=[])
 
     decision = run(backend.promote_candidate(rejected))
 
@@ -61,12 +61,12 @@ def test_promote_candidate_runs_distillation_gate_before_graph_write():
     decision = run(backend.promote_candidate(accepted))
 
     assert decision.promote is True
-    trusted = run(backend.recall("AX-17"))
+    trusted = run(backend.recall("MI325X"))
     assert trusted == [
         {
             **accepted,
             "status": "trusted",
-            "distill_reason": "attributed, scoped, testable hypothesis",
+            "distill_reason": "attributed evidence",
             "distill_confidence": decision.confidence,
         }
     ]
@@ -100,10 +100,10 @@ def test_redis_session_store_routes_by_session_key():
     run(store.remember(_claim(id="claim_other", text="Unrelated"), "run_002"))
 
     assert list(redis.lists) == [
-        "hypothesis-wiki:session:run_001",
-        "hypothesis-wiki:session:run_002",
+        "benchmark-claim-wiki:session:run_001",
+        "benchmark-claim-wiki:session:run_002",
     ]
-    assert run(store.recall("AX-17", "run_001")) == [claim]
+    assert run(store.recall("MI325X", "run_001")) == [claim]
 
 
 def test_cognee_trusted_graph_store_writes_without_session_id():
@@ -125,7 +125,7 @@ def test_cognee_trusted_graph_store_writes_without_session_id():
 
     assert len(cognee.remembered) == 1
     assert "session_id" not in cognee.remembered[0]
-    assert run(store.recall("AX-17")) == []
+    assert run(store.recall("MI325X")) == []
 
 
 def test_cognee_trusted_graph_store_recalls_only_from_cognee_dataset():
@@ -143,8 +143,8 @@ def test_cognee_trusted_graph_store_recalls_only_from_cognee_dataset():
     cognee = FakeCognee()
     store = CogneeTrustedGraphStore(cognee, dataset_name="trusted-hypotheses")
 
-    assert run(store.recall("AX-17")) == [{"text": "trusted graph result"}]
-    assert cognee.recalled == [("AX-17", {"datasets": ["trusted-hypotheses"]})]
+    assert run(store.recall("MI325X")) == [{"text": "trusted graph result"}]
+    assert cognee.recalled == [("MI325X", {"datasets": ["trusted-hypotheses"]})]
 
 
 def test_create_memory_backend_requires_redis_url(monkeypatch):

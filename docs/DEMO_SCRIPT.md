@@ -4,42 +4,42 @@
 
 ### 0:00-0:25
 
-Most science-agent demos optimize for more memory. That is dangerous. Science does not just need more recall; it needs memory that preserves scope, negative evidence, and contradictions.
+AI benchmark claims spread fast, but the scope often gets lost. A result that is valid for one benchmark, model, hardware setup, scenario, and metric can turn into a broad claim about "best inference performance."
 
-Hypothesis Wiki gets more correct over time, not just bigger.
+Benchmark Claim Wiki gets more correct over time, not just bigger.
 
 ### 0:25-0:55
 
 Architecture:
 
 ```text
-Redis = lab scratchpad
+Redis = session quarantine
 Cognee = trusted graph
-Distillation gate = scientific judgment
+Distillation gate = promotion policy
 ```
 
-Every raw paper and candidate claim starts in Redis session memory. Only attributed, scoped, testable claims pass into Cognee's permanent graph.
+Every raw result card and candidate claim starts in Redis session memory. Only attributed, scoped, testable claims pass into Cognee's permanent graph.
 
 ### 0:55-1:45
 
 Demo question:
 
 ```text
-Should AX-17 be used for high-temperature battery cells?
+Can the top MLPerf Offline Llama2 result be generalized to all serving workloads?
 ```
 
-Run 1 sees a positive paper and overclaims:
+Run 1 overclaims:
 
 ```text
-AX-17 improves battery stability and should be used.
+MI325X delivers top Llama2 throughput and should be used for all Llama2 serving workloads.
 ```
 
-Lint catches the scientific error:
+Lint and critic feedback catch the error:
 
 ```text
-Missing scope: below 40C, electrolyte E1
-Omitted evidence: degradation at 60C
-Action: retire broad claim
+Missing scope: MLPerf Inference v5.1, model, hardware, scenario, metric
+Omitted evidence: Server is a separate lower result
+Action: retire broad serving-workload claim
 ```
 
 ### 1:45-2:30
@@ -47,15 +47,15 @@ Action: retire broad claim
 The critic records feedback and the distiller improves:
 
 ```text
-Preserve experimental conditions.
-Never collapse conditional findings into universal claims.
-Promote negative results as first-class evidence.
+Preserve benchmark, model, hardware, scenario, and metric.
+Never collapse scenario-specific findings into universal claims.
+Promote conditional or contrary results as first-class evidence.
 ```
 
 Run 2 answer:
 
 ```text
-AX-17 is supported only below 40C with electrolyte E1. High-temperature and E2 evidence is negative or non-replicating.
+MI325X Llama2 performance is supported only under MLPerf Inference v5.1, llama2-70b-99, Offline scenario, 8x AMD Instinct MI325X; Offline results do not generalize to Server serving workloads because MLPerf reports a separate lower Server result.
 ```
 
 ### 2:30-3:00
@@ -63,7 +63,7 @@ AX-17 is supported only below 40C with electrolyte E1. High-temperature and E2 e
 Scoreboard:
 
 ```text
-Retrieval score:     flat
+Retrieval score:     up
 Hypothesis hygiene: up
 Scope errors:       down
 Contradictions:     caught
@@ -75,4 +75,3 @@ Closing:
 ```text
 Cognee gives us durable graph memory. Redis gives us session memory. The unique piece is the distillation policy between them: a wiki that learns what not to promote.
 ```
-

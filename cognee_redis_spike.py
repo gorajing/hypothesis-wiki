@@ -9,18 +9,18 @@ from backend.storage import (
 )
 
 
-RUN_ID = f"hypothesis-wiki-spike-{uuid4().hex[:8]}"
+RUN_ID = f"benchmark-claim-wiki-spike-{uuid4().hex[:8]}"
 
 
 async def main() -> None:
     raw_candidate = {
-        "id": "spike_candidate_001",
-        "kind": "hypothesis",
-        "text": "AX-17 improves retention below 40C with electrolyte E1.",
-        "source": "spike_paper",
-        "scope_conditions": ["below 40C", "electrolyte E1"],
-        "outcome": "retention",
-        "direction": "improves",
+        "id": "spike_mlperf_claim_001",
+        "kind": "evidence",
+        "text": "MI325X reached 34,520.4 samples/s on llama2-70b-99 in MLPerf Offline.",
+        "source": "mlperf_v5_1_spike",
+        "scope_conditions": ["MLPerf Inference v5.1", "llama2-70b-99", "Offline scenario", "8x AMD Instinct MI325X"],
+        "outcome": "llama2-70b throughput",
+        "direction": "observes",
         "status": "redis_quarantine",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -41,12 +41,12 @@ async def main() -> None:
     print("graph write ok")
 
     print("Recalling from session memory...")
-    session_result = await backend.recall("AX-17 retention E1", session_id=RUN_ID)
+    session_result = await backend.recall("MLPerf MI325X Llama2", session_id=RUN_ID)
     print("session recall returned data")
     print(_preview(session_result))
 
     print("Recalling from graph memory...")
-    graph_result = await backend.recall("AX-17 retention E1")
+    graph_result = await backend.recall("MLPerf MI325X Llama2")
     print("graph recall returned data")
     print(_preview(graph_result))
 

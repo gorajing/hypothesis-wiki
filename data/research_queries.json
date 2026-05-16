@@ -1,10 +1,9 @@
 {
-  "topic": "lithium battery electrolyte additives under high-temperature cycling",
+  "topic": "AI inference benchmark claims with hardware and serving-scenario scope",
   "limit_per_query": 6,
   "queries": [
-    "lithium ion battery electrolyte additive high temperature capacity retention",
-    "lithium battery electrolyte additive no significant improvement high temperature",
-    "lithium metal battery electrolyte additive thermal stability cycling"
+    "MLPerf Inference v5.1 Llama2 Offline Server throughput MI325X",
+    "MLPerf Inference Mixtral Offline Server scheduled samples per second",
+    "AI benchmark claims hardware scope serving scenario generalization"
   ]
 }
-

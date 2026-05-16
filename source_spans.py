@@ -215,7 +215,7 @@ def validate_claims_against_cards(
                 EvidenceSpanIssue(
                     "missing_source_card",
                     claim.get("id"),
-                    f"no paper card found for source {claim.get('source')!r}",
+                    f"no source card found for source {claim.get('source')!r}",
                 )
             )
             continue

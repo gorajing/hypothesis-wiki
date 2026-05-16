@@ -25,7 +25,7 @@ Do not spend more than 20 minutes here.
 Build and keep the deterministic path working:
 
 ```text
-paper_cards.json -> candidate claims -> should_distill -> graph -> lint -> score
+source result cards -> candidate claims -> should_distill -> graph -> lint -> score
 ```
 
 This is the fallback demo and the test harness for Cognee/Redis wiring.
@@ -70,7 +70,7 @@ Cut first:
 - full-text ingestion
 - UI
 - live LLM extraction
-- broad paper search
+- broad source search
 
 ## Done Definition
 
@@ -89,4 +89,3 @@ Run 2: scoped answer
 Hypothesis hygiene improves
 Redis and Cognee roles are visible in output
 ```
-

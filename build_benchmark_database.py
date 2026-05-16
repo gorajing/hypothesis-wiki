@@ -13,7 +13,7 @@ ROOT = Path(__file__).parent
 DEFAULT_SOURCES = (
     ("data/mlperf_v5_1_cards.json", "data/mlperf_v5_1_claims.json"),
 )
-DEFAULT_OUTPUT = "data/science_claim_audit_db.json"
+DEFAULT_OUTPUT = "data/benchmark_claim_audit_db.json"
 
 
 class AuditGraphState:
@@ -39,7 +39,7 @@ class AuditGraphState:
 
 def build_database(sources: list[tuple[Path, Path]]) -> dict[str, Any]:
     graph = AuditGraphState()
-    papers: list[dict[str, Any]] = []
+    source_cards: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
 
     for cards_path, claims_path in sources:
@@ -51,16 +51,16 @@ def build_database(sources: list[tuple[Path, Path]]) -> dict[str, Any]:
             raise RuntimeError(f"{claims_path} failed provenance validation:\n{detail}")
 
         for card in cards:
-            papers.append(_paper_summary(card))
+            source_cards.append(_source_card_summary(card))
 
         for claim in claims:
             decision = should_distill(claim, graph)
             graph.remember_if_promoted(claim, decision.promote)
             records.append(_audit_record(claim, decision))
 
-    summary = _summary(papers, records)
+    summary = _summary(source_cards, records)
     return {
-        "database_name": "hypothesis_wiki_science_claim_audit_db",
+        "database_name": "benchmark_claim_wiki_audit_db",
         "version": 1,
         "description": (
             "A small AI benchmark claim audit database: MLPerf Inference v5.1 "
@@ -69,7 +69,7 @@ def build_database(sources: list[tuple[Path, Path]]) -> dict[str, Any]:
             "decisions."
         ),
         "summary": summary,
-        "source_papers": papers,
+        "source_cards": source_cards,
         "demo_queries": [
             {
                 "id": "mlperf_llama2_scenario_scope",
@@ -113,14 +113,14 @@ async def load_live(database: dict[str, Any], session_id: str) -> dict[str, Any]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the real science claim audit database.")
+    parser = argparse.ArgumentParser(description="Build the AI benchmark claim audit database.")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--load-live",
         action="store_true",
         help="Also write records through Redis and promote claims into Cognee.",
     )
-    parser.add_argument("--session-id", default="science-claim-audit-db")
+    parser.add_argument("--session-id", default="benchmark-claim-audit-db")
     args = parser.parse_args()
 
     sources = [(ROOT / cards, ROOT / claims) for cards, claims in DEFAULT_SOURCES]
@@ -171,14 +171,10 @@ def _audit_verdict(claim: dict[str, Any]) -> str:
         if any("Offline scenario" in scope for scope in claim.get("scope_conditions", [])):
             return "offline_benchmark_result"
         return "scoped_benchmark_result"
-    if claim.get("kind") == "negative_result" or claim.get("direction") == "safety_risk":
-        return "safety_risk"
-    if claim.get("kind") == "hypothesis" and claim.get("direction") == "improves":
-        return "supported_efficacy"
-    return "supporting_evidence"
+    return "non_mlperf_claim"
 
 
-def _paper_summary(card: dict[str, Any]) -> dict[str, Any]:
+def _source_card_summary(card: dict[str, Any]) -> dict[str, Any]:
     return {
         "paper_id": card["paper_id"],
         "title": card["title"],
@@ -192,19 +188,16 @@ def _paper_summary(card: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _summary(papers: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
+def _summary(source_cards: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
     verdicts = Counter(record["audit_verdict"] for record in records)
     promotions = Counter(record["promotion_status"] for record in records)
     return {
-        "paper_count": len(papers),
+        "source_card_count": len(source_cards),
         "claim_count": len(records),
         "provenance_valid_claims": sum(1 for record in records if record["evidence_span_valid"]),
         "trusted_graph_ready_claims": sum(1 for record in records if record["trusted_graph_ready"]),
         "offline_benchmark_claims": verdicts["offline_benchmark_result"],
         "server_benchmark_claims": verdicts["server_benchmark_result"],
-        "safety_risk_claims": verdicts["safety_risk"],
-        "supported_efficacy_claims": verdicts["supported_efficacy"],
-        "supporting_evidence_claims": verdicts["supporting_evidence"],
         "promotion_status_counts": dict(sorted(promotions.items())),
         "audit_verdict_counts": dict(sorted(verdicts.items())),
     }
@@ -213,7 +206,7 @@ def _summary(papers: list[dict[str, Any]], records: list[dict[str, Any]]) -> dic
 def _print_summary(database: dict[str, Any], output_path: Path) -> None:
     summary = database["summary"]
     print(f"database: {output_path.relative_to(ROOT)}")
-    print(f"papers:   {summary['paper_count']}")
+    print(f"sources:  {summary['source_card_count']}")
     print(f"claims:   {summary['claim_count']}")
     print(f"valid:    {summary['provenance_valid_claims']}")
     print(f"promote:  {summary['trusted_graph_ready_claims']}")

@@ -1,10 +1,10 @@
 # Provenance Contract
 
-Hypothesis Wiki borrows the strongest idea from `biorender-figure-compiler`: AI output is not trusted until it is anchored to verbatim source text.
+Benchmark Claim Wiki does not trust extracted claims until they are anchored to verbatim source text.
 
 ## Rule
 
-Every promoted scientific claim should carry:
+Every promoted benchmark claim should carry:
 
 ```text
 id
@@ -26,9 +26,7 @@ status
 confidence
 ```
 
-The span must be a literal substring of the source paper card's `source_text` or `abstract`.
-`source_spans.validate_claims_against_cards()` enforces both the required fields
-and the deterministic span offsets before claims are written or promoted.
+The span must be a literal substring of the source card's `source_text` or `abstract`. `source_spans.validate_claims_against_cards()` enforces both the required fields and the deterministic span offsets before claims are written or promoted.
 
 ## Extraction Pattern
 
@@ -55,7 +53,7 @@ Do not ask the model to compute offsets. Python computes offsets deterministical
 
 ## Promotion Gate
 
-`should_distill()` rejects a real extracted claim if it has an `evidence_span` but lacks validated offsets.
+`should_distill()` rejects an extracted claim if it has an `evidence_span` but lacks validated offsets.
 
 This preserves the Redis/Cognee split:
 
@@ -64,29 +62,27 @@ unsupported candidate claim -> Redis only
 validated evidence-backed claim -> Cognee graph
 ```
 
-## Deterministic Real-Paper Fixtures
+## Deterministic MLPerf Fixture
 
-The repository keeps curated real-paper fixtures so tests can prove the ingestion
-path without live API variance:
+The repository keeps a curated MLPerf Inference v5.1 fixture so tests can prove the ingestion path without live API variance:
 
-- `data/maude_2018_cart.json`: Maude 2018 NEJM CAR-T trial.
-- `data/neelapu_2017_axi_cel.json`: Neelapu 2017 NEJM ZUMA-1 axi-cel trial.
-
-Each fixture contains DOI / PMID metadata, source text, curated expected claims,
-and exact evidence spans.
+- `data/mlperf_v5_1_cards.json`: source result cards for six MLPerf records.
+- `data/mlperf_v5_1_claims.json`: generated and validated claims for those records.
+- `data/benchmark_claim_audit_db.json`: final audit database built from the validated claims.
 
 Generate candidate claims:
 
 ```bash
 python3 ingest_real_research.py \
-  --from-cards data/maude_2018_cart.json \
-  --claims-out data/maude_2018_claims.json \
-  --extractor curated
-
-python3 ingest_real_research.py \
-  --from-cards data/neelapu_2017_axi_cel.json \
-  --claims-out data/neelapu_2017_claims.json \
+  --from-cards data/mlperf_v5_1_cards.json \
+  --claims-out data/mlperf_v5_1_claims.json \
   --extractor curated
 ```
 
-This gives the wiki real scientific substance without introducing live API variance.
+Build the submission database:
+
+```bash
+python3 build_benchmark_database.py
+```
+
+This gives the wiki current AI benchmark substance without introducing live API variance during the judged demo.

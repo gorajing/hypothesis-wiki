@@ -2,7 +2,7 @@
 
 ## Product Claim
 
-Hypothesis Wiki is a scientific memory layer for research agents. It does not claim to discover new science on its own. It claims to preserve the evidence discipline a science agent needs before it can do novel research safely.
+Benchmark Claim Wiki is a memory layer for AI benchmark agents. It does not claim to invent new benchmarks. It preserves the evidence discipline needed to answer benchmark questions without losing model, hardware, scenario, metric, or source scope.
 
 The core demo claim:
 
@@ -16,14 +16,14 @@ Every wiki gets bigger. This one gets less wrong.
 
 Redis stores untrusted, run-scoped material:
 
-- raw paper cards
+- raw MLPerf result cards
 - candidate extracted claims
 - rejected claims and rejection reasons
 - lint issues
 - critic feedback
 - run scores
 
-This is the lab scratchpad. Claims in Redis are not trusted wiki knowledge.
+This is the session quarantine. Claims in Redis are not trusted wiki knowledge.
 
 ### Distillation Gate
 
@@ -32,17 +32,17 @@ This is the lab scratchpad. Claims in Redis are not trusted wiki knowledge.
 Hard gates:
 
 - source attribution is present
-- claim has a testable outcome or is explicit evidence
-- scientific scope conditions are preserved when required
+- claim has a benchmark outcome or explicit evidence
+- benchmark, model, hardware, scenario, and metric scope are preserved when required
 - near-duplicate claims are rejected
-- negative evidence is not erased
+- conditional or contrary evidence is not erased
 - contradictions are marked open, resolved, or converted into retirement edges
 
 ### Cognee Graph
 
-Cognee stores durable scientific memory:
+Cognee stores durable trusted memory:
 
-- promoted hypotheses
+- promoted benchmark claims
 - evidence nodes
 - source links
 - scope conditions
@@ -52,28 +52,28 @@ Cognee stores durable scientific memory:
 
 ### Lint
 
-Lint checks the graph for scientific hygiene:
+Lint checks the graph for benchmark hygiene:
 
 - missing source
 - missing scope condition
-- overgeneralized hypothesis
+- overgeneralized benchmark claim
 - contradiction with promoted evidence
-- omitted negative result
+- omitted scenario-specific result
 - duplicate claim
 - stale claim that should be retired
 
 ### Self-Improvement
 
-The deterministic demo uses a controlled v1 -> v2 distiller change so the live presentation cannot fail because of an API or LLM variance.
+The deterministic demo uses a controlled v1 -> v2 distiller change so the live presentation cannot fail because of API or LLM variance.
 
-The Cognee integration should still record real `SkillRunEntry` feedback. If Cognee `improve_skill(apply=True)` works in the environment, it becomes the live mechanism. If not, the deterministic skill swap is the fallback with the same visible behavior.
+The live Cognee/Redis spike proves the same storage split with real services: Redis for session memory, Cognee for trusted graph memory, no silent in-memory fallback.
 
 ## Data Flow
 
 ```text
-1. Ingest paper card
+1. Ingest MLPerf result card
 2. Store raw card in Redis session memory
-3. Deterministically map card to candidate claim
+3. Map card to candidate benchmark claim
 4. Store candidate claim in Redis session memory
 5. Run should_distill(candidate, graph_state)
 6. Promote accepted claims to Cognee graph
@@ -87,8 +87,6 @@ The Cognee integration should still record real `SkillRunEntry` feedback. If Cog
 ## Non-Goals
 
 - No UI for the hackathon version.
-- No full PDF ingestion in the first demo path.
-- No full Zuhn or Memric port.
-- No claim of autonomous scientific discovery.
+- No autonomous benchmark discovery claim.
 - No dependency on a live LLM call during the judged demo.
-
+- No silent fallback when Redis or Cognee are required.
