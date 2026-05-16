@@ -21,12 +21,12 @@ scope preservation, contradiction handling, and claim retirement improved.
 
 Domain or data sources:
 
-- Real CAR-T paper fixtures:
-  - Maude 2018, tisagenlecleucel in pediatric/young adult B-cell ALL
-    (PMID 29385370, DOI 10.1056/NEJMoa1709866)
-  - Neelapu 2017, axicabtagene ciloleucel in refractory large B-cell lymphoma
-    (PMID 29226797, DOI 10.1056/NEJMoa1707447)
+- MLCommons MLPerf Inference v5.1 result records:
+  - Llama2-70B and Mixtral-8x7B benchmark claims
+  - Offline vs Server scenario scope
+  - AMD Instinct MI300X vs MI325X hardware scope
 - Optional Semantic Scholar abstract search via `ingest_real_research.py`
+- Optional CAR-T paper fixtures retained as biomedical examples
 - Controlled AX-17 battery corpus for deterministic before/after
   self-improvement evidence
 
@@ -50,15 +50,15 @@ What makes it stand out:
 
 What goes in:
 
-- Real paper cards containing title, abstract/source text, PubMed IDs, DOI,
-  URLs, and metadata
+- Source cards containing MLPerf result metadata, source URLs, benchmark name,
+  hardware, scenario, measured throughput, and evidence text
 - Candidate claims extracted from those cards
 - Agent run traces and raw intermediate observations
 - Rejected claims and distillation-gate reasons
 
 How it is captured:
 
-- `ingest_real_research.py` extracts candidate claims from real paper cards.
+- `ingest_real_research.py` extracts candidate claims from source cards.
 - `source_spans.validate_claims_against_cards()` validates each claim against a
   verbatim evidence span with deterministic offsets.
 - `RedisSessionStore.remember(payload, session_id=...)` stores raw/candidate
@@ -133,9 +133,9 @@ Code entry point:
 
 ## Self-Improvement Evidence
 
-The live real-data path proves that real CAR-T paper claims can be extracted
-and provenance-validated, and that Redis/Cognee are actually used. The
-self-improvement evidence uses a controlled AX-17 corpus so the before/after
+The live real-data path proves that current AI benchmark claims can be
+extracted and provenance-validated, and that Redis/Cognee are actually used.
+The self-improvement evidence uses a controlled AX-17 corpus so the before/after
 run is deterministic and judge-repeatable.
 
 Real-data ingest proof:
@@ -144,28 +144,20 @@ Real-data ingest proof:
 python3 build_science_database.py
 
 database: data/science_claim_audit_db.json
-papers:   2
-claims:   14
-valid:    14
-promote:  14
-safety:   6
-efficacy: 2
+papers:   6
+claims:   6
+valid:    6
+promote:  6
+offline:  3
+server:   3
 
 python3 ingest_real_research.py \
-  --from-cards data/maude_2018_cart.json \
-  --claims-out /tmp/maude_claims.json \
+  --from-cards data/mlperf_v5_1_cards.json \
+  --claims-out /tmp/mlperf_claims.json \
   --extractor curated
 
-paper_cards: 1 -> data/maude_2018_cart.json
-claims:      8 -> /tmp/maude_claims.json
-
-python3 ingest_real_research.py \
-  --from-cards data/neelapu_2017_axi_cel.json \
-  --claims-out /tmp/neelapu_claims.json \
-  --extractor curated
-
-paper_cards: 1 -> data/neelapu_2017_axi_cel.json
-claims:      6 -> /tmp/neelapu_claims.json
+paper_cards: 6 -> data/mlperf_v5_1_cards.json
+claims:      6 -> /tmp/mlperf_claims.json
 ```
 
 Live Redis/Cognee proof:
@@ -274,7 +266,7 @@ less."
 ## Architecture
 
 ```text
-[real paper cards / agent turns / run traces]
+[AI benchmark result cards / agent turns / run traces]
         |
         v
 [ Redis - session memory quarantine ]
@@ -295,7 +287,7 @@ less."
 
 Components:
 
-- `ingest_real_research.py`: fetch/use real paper cards and extract claims
+- `ingest_real_research.py`: fetch/use source cards and extract claims
 - `source_spans.py`: validate evidence spans and offsets
 - `backend/storage.py`: Redis session store and Cognee trusted graph adapter
 - `distillation_policy.py`: promotion gate
@@ -308,7 +300,7 @@ Components:
 
 What the agent writes into Redis:
 
-- raw paper cards
+- raw source cards
 - candidate claims
 - rejected claims and rejection reasons
 - critic feedback
@@ -364,13 +356,8 @@ python3 -m pytest -q
 python3 build_science_database.py
 
 python3 ingest_real_research.py \
-  --from-cards data/maude_2018_cart.json \
-  --claims-out /tmp/maude_claims.json \
-  --extractor curated
-
-python3 ingest_real_research.py \
-  --from-cards data/neelapu_2017_axi_cel.json \
-  --claims-out /tmp/neelapu_claims.json \
+  --from-cards data/mlperf_v5_1_cards.json \
+  --claims-out /tmp/mlperf_claims.json \
   --extractor curated
 
 python3 demo.py
@@ -420,8 +407,9 @@ order: real-paper ingest, tests, self-improvement demo, live Redis/Cognee spike.
    - Hypothesis Wiki treats raw claims as untrusted until they pass provenance
      and scope checks.
 2. Ingest demo
-   - Run real CAR-T ingest on Maude 2018 and Neelapu 2017.
-   - Show 14 validated real-paper claims with PubMed/DOI/evidence spans.
+   - Run MLPerf v5.1 ingest.
+   - Show 6 validated AI benchmark claims with source URLs, exact evidence
+     spans, hardware scope, benchmark scope, and Offline/Server scenario scope.
 3. Query demo before improvement
    - Run `python3 demo.py`.
    - Show v1 answer overclaims because the distiller erased scope.
