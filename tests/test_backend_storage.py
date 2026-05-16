@@ -1,15 +1,18 @@
 import asyncio
+import os
 import sys
 import types
 
 import pytest
 
 from backend.storage import (
+    BackendUnavailableError,
     CogneeTrustedGraphStore,
     HypothesisMemoryBackend,
     InMemorySessionStore,
     InMemoryTrustedGraphStore,
     RedisSessionStore,
+    create_in_memory_backend,
     create_memory_backend,
 )
 
@@ -69,8 +72,8 @@ def test_promote_candidate_runs_distillation_gate_before_graph_write():
     ]
 
 
-def test_create_memory_backend_uses_in_memory_fallback_without_services():
-    backend = run(create_memory_backend(redis_url=None, use_cognee=False))
+def test_create_in_memory_backend_is_explicit_test_helper():
+    backend = create_in_memory_backend()
 
     assert isinstance(backend.session_store, InMemorySessionStore)
     assert isinstance(backend.trusted_graph, InMemoryTrustedGraphStore)
@@ -111,7 +114,7 @@ def test_cognee_trusted_graph_store_writes_without_session_id():
         async def remember(self, payload):
             self.remembered.append(payload)
 
-        async def recall(self, query):
+        async def recall(self, query, **kwargs):
             return []
 
     cognee = FakeCognee()
@@ -122,17 +125,164 @@ def test_cognee_trusted_graph_store_writes_without_session_id():
 
     assert len(cognee.remembered) == 1
     assert "session_id" not in cognee.remembered[0]
-    assert run(store.recall("AX-17")) == [claim]
+    assert run(store.recall("AX-17")) == []
 
 
-def test_enabled_cognee_with_incompatible_api_warns_and_falls_back(monkeypatch):
+def test_cognee_trusted_graph_store_recalls_only_from_cognee_dataset():
+    class FakeCognee:
+        def __init__(self):
+            self.recalled = []
+
+        async def remember(self, payload, **kwargs):
+            pass
+
+        async def recall(self, query, **kwargs):
+            self.recalled.append((query, kwargs))
+            return [{"text": "trusted graph result"}]
+
+    cognee = FakeCognee()
+    store = CogneeTrustedGraphStore(cognee, dataset_name="trusted-hypotheses")
+
+    assert run(store.recall("AX-17")) == [{"text": "trusted graph result"}]
+    assert cognee.recalled == [("AX-17", {"datasets": ["trusted-hypotheses"]})]
+
+
+def test_create_memory_backend_requires_redis_url(monkeypatch):
+    monkeypatch.delenv("REDIS_URL", raising=False)
+
+    with pytest.raises(BackendUnavailableError, match="REDIS_URL is required"):
+        run(create_memory_backend(redis_url=None))
+
+
+def test_create_memory_backend_requires_cognee(monkeypatch):
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
+
+    with pytest.raises(BackendUnavailableError, match="Cognee trusted graph is required"):
+        run(create_memory_backend(redis_url="redis://example", use_cognee=False))
+
+
+def test_create_memory_backend_with_incompatible_cognee_api_raises(monkeypatch):
     fake_cognee = types.SimpleNamespace(
         remember=lambda payload: None,
         recall=lambda query: [],
     )
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
     monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
 
-    with pytest.warns(RuntimeWarning, match="falling back to InMemoryTrustedGraphStore"):
-        backend = run(create_memory_backend(redis_url=None, use_cognee=True))
+    with pytest.raises(BackendUnavailableError, match="compatible async remember"):
+        run(create_memory_backend(redis_url="redis://example", use_cognee=True))
 
-    assert isinstance(backend.trusted_graph, InMemoryTrustedGraphStore)
+
+def test_create_memory_backend_requires_llm_key_for_local_cognee(monkeypatch):
+    fake_cognee = types.SimpleNamespace(
+        remember=_async_noop,
+        recall=_async_empty,
+    )
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
+    monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("COGNEE_URL", raising=False)
+    monkeypatch.delenv("COGNEE_API_KEY", raising=False)
+
+    with pytest.raises(BackendUnavailableError, match="LLM_API_KEY is required"):
+        run(create_memory_backend(redis_url="redis://example", use_cognee=True))
+
+
+def test_create_memory_backend_requires_complete_cognee_cloud_config(monkeypatch):
+    fake_cognee = types.SimpleNamespace(
+        remember=_async_noop,
+        recall=_async_empty,
+    )
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
+    monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    with pytest.raises(BackendUnavailableError, match="COGNEE_URL and COGNEE_API_KEY"):
+        run(
+            create_memory_backend(
+                redis_url="redis://example",
+                use_cognee=True,
+                cognee_url="https://example.cognee.ai",
+            )
+        )
+
+
+def test_create_memory_backend_maps_openai_key_for_local_cognee(monkeypatch):
+    fake_cognee = types.SimpleNamespace(
+        remembered=[],
+        remember=_async_noop,
+        recall=_async_empty,
+    )
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
+    monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
+
+    run(create_memory_backend(redis_url="redis://example", use_cognee=True))
+
+    assert os.environ["LLM_API_KEY"] == "test-openai-key"
+
+
+def test_create_memory_backend_uses_real_redis_and_cognee_interfaces(monkeypatch):
+    class FakeCognee:
+        def __init__(self):
+            self.remembered = []
+
+        async def remember(self, payload, **kwargs):
+            self.remembered.append((payload, kwargs))
+
+        async def recall(self, query):
+            return []
+
+    fake_cognee = FakeCognee()
+    monkeypatch.setitem(sys.modules, "redis", _fake_redis_module())
+    monkeypatch.setitem(sys.modules, "cognee", fake_cognee)
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+
+    backend = run(
+        create_memory_backend(
+            redis_url="redis://example",
+            use_cognee=True,
+            cognee_dataset_name="trusted-hypotheses",
+        )
+    )
+    claim = _claim()
+
+    assert isinstance(backend.trusted_graph, CogneeTrustedGraphStore)
+    run(backend.remember(claim))
+
+    assert fake_cognee.remembered
+    assert fake_cognee.remembered[0][1] == {"dataset_name": "trusted-hypotheses"}
+
+
+async def _async_noop(*args, **kwargs):
+    return None
+
+
+async def _async_empty(*args, **kwargs):
+    return []
+
+
+def _fake_redis_module():
+    class FakeRedisClient:
+        def __init__(self):
+            self.lists = {}
+
+        async def ping(self):
+            return True
+
+        async def rpush(self, key, value):
+            self.lists.setdefault(key, []).append(value)
+
+        async def lrange(self, key, start, end):
+            return self.lists.get(key, [])
+
+    class FakeRedisAsyncio:
+        @staticmethod
+        def from_url(url, decode_responses=True):
+            return FakeRedisClient()
+
+    return types.SimpleNamespace(asyncio=FakeRedisAsyncio)

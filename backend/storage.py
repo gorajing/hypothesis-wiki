@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import warnings
 from dataclasses import asdict
 from inspect import iscoroutinefunction
 from typing import Any, Protocol
@@ -11,6 +10,10 @@ from distillation_policy import DistillDecision, should_distill
 
 
 SESSION_KEY_PREFIX = "hypothesis-wiki:session"
+
+
+class BackendUnavailableError(RuntimeError):
+    pass
 
 
 class SessionStore(Protocol):
@@ -80,19 +83,17 @@ class CogneeTrustedGraphStore:
     intentionally not used here; Redis owns quarantine/session routing.
     """
 
-    def __init__(self, cognee_module: Any) -> None:
+    def __init__(self, cognee_module: Any, dataset_name: str | None = None) -> None:
         self.cognee = cognee_module
-        self.claims: list[dict[str, Any]] = []
+        self.dataset_name = dataset_name
 
     async def remember(self, payload: dict[str, Any]) -> None:
-        await self.cognee.remember(json.dumps(payload, sort_keys=True))
-        self.claims.append(dict(payload))
+        kwargs = {"dataset_name": self.dataset_name} if self.dataset_name else {}
+        await self.cognee.remember(json.dumps(payload, sort_keys=True), **kwargs)
 
     async def recall(self, query: str) -> list[dict[str, Any]]:
-        result = await self.cognee.recall(query)
-        if result:
-            return _normalize_recall(result)
-        return [claim for claim in self.claims if _matches_query(claim, query)]
+        kwargs = {"datasets": [self.dataset_name]} if self.dataset_name else {}
+        return _normalize_recall(await self.cognee.recall(query, **kwargs))
 
 
 class HypothesisMemoryBackend:
@@ -151,51 +152,120 @@ async def create_memory_backend(
     redis_url: str | None = None,
     *,
     use_cognee: bool | None = None,
+    cognee_url: str | None = None,
+    cognee_api_key: str | None = None,
+    cognee_dataset_name: str | None = None,
 ) -> HypothesisMemoryBackend:
     session_store = await _create_session_store(redis_url)
-    trusted_graph = _create_trusted_graph(use_cognee)
+    trusted_graph = await _create_trusted_graph(
+        use_cognee,
+        cognee_url=cognee_url,
+        cognee_api_key=cognee_api_key,
+        dataset_name=cognee_dataset_name,
+    )
     return HypothesisMemoryBackend(session_store, trusted_graph)
+
+
+def create_in_memory_backend() -> HypothesisMemoryBackend:
+    return HypothesisMemoryBackend(InMemorySessionStore(), InMemoryTrustedGraphStore())
 
 
 async def _create_session_store(redis_url: str | None) -> SessionStore:
     url = redis_url or os.getenv("REDIS_URL")
     if not url:
-        return InMemorySessionStore()
+        raise BackendUnavailableError("REDIS_URL is required for Redis session quarantine")
 
     try:
         from redis import asyncio as redis_asyncio
-    except ImportError:
-        return InMemorySessionStore()
+    except ImportError as exc:
+        raise BackendUnavailableError("redis package is not installed") from exc
 
     try:
         client = redis_asyncio.from_url(url, decode_responses=True)
         await client.ping()
-    except Exception:
-        return InMemorySessionStore()
+    except Exception as exc:
+        raise BackendUnavailableError(f"Redis is not reachable at {url!r}: {exc}") from exc
 
     return RedisSessionStore(client)
 
 
-def _create_trusted_graph(use_cognee: bool | None) -> TrustedGraphStore:
-    enabled = use_cognee if use_cognee is not None else os.getenv("COGNEE_ENABLED") == "1"
+async def _create_trusted_graph(
+    use_cognee: bool | None,
+    *,
+    cognee_url: str | None = None,
+    cognee_api_key: str | None = None,
+    dataset_name: str | None = None,
+) -> TrustedGraphStore:
+    enabled = True if use_cognee is None else use_cognee
     if not enabled:
-        return InMemoryTrustedGraphStore()
+        raise BackendUnavailableError("Cognee trusted graph is required")
 
     try:
         import cognee
-    except ImportError:
-        return InMemoryTrustedGraphStore()
+    except ImportError as exc:
+        raise BackendUnavailableError("cognee package is not installed") from exc
+
+    configured_cognee_url = cognee_url or os.getenv("COGNEE_URL")
+    configured_cognee_api_key = cognee_api_key or os.getenv("COGNEE_API_KEY")
+
+    _configure_local_cognee_llm_if_needed(
+        cognee_url=configured_cognee_url,
+        cognee_api_key=configured_cognee_api_key,
+    )
+
+    await _connect_cognee_cloud_if_configured(
+        cognee,
+        cognee_url=configured_cognee_url,
+        cognee_api_key=configured_cognee_api_key,
+    )
 
     if not _has_compatible_cognee_api(cognee):
-        warnings.warn(
-            "COGNEE_ENABLED=1 but Cognee does not expose async remember(payload) "
-            "and recall(query); falling back to InMemoryTrustedGraphStore.",
-            RuntimeWarning,
-            stacklevel=2,
+        raise BackendUnavailableError(
+            "Cognee does not expose compatible async remember(payload) and recall(query) calls"
         )
-        return InMemoryTrustedGraphStore()
 
-    return CogneeTrustedGraphStore(cognee)
+    return CogneeTrustedGraphStore(cognee, dataset_name=dataset_name or os.getenv("COGNEE_DATASET"))
+
+
+def _configure_local_cognee_llm_if_needed(
+    *,
+    cognee_url: str | None,
+    cognee_api_key: str | None,
+) -> None:
+    if bool(cognee_url) != bool(cognee_api_key):
+        raise BackendUnavailableError("COGNEE_URL and COGNEE_API_KEY must be set together")
+    if cognee_url and cognee_api_key:
+        return
+    if os.getenv("LLM_API_KEY"):
+        return
+
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    if openai_api_key:
+        os.environ["LLM_API_KEY"] = openai_api_key
+        return
+
+    raise BackendUnavailableError(
+        "LLM_API_KEY is required for local Cognee graph writes "
+        "(or set both COGNEE_URL and COGNEE_API_KEY for Cognee Cloud)"
+    )
+
+
+async def _connect_cognee_cloud_if_configured(
+    cognee_module: Any,
+    *,
+    cognee_url: str | None,
+    cognee_api_key: str | None,
+) -> None:
+    if not cognee_url and not cognee_api_key:
+        return
+    if not cognee_url or not cognee_api_key:
+        raise BackendUnavailableError("COGNEE_URL and COGNEE_API_KEY must be set together")
+
+    serve = getattr(cognee_module, "serve", None)
+    if not iscoroutinefunction(serve):
+        raise BackendUnavailableError("Cognee cloud configuration requires async cognee.serve()")
+
+    await serve(url=cognee_url, api_key=cognee_api_key)
 
 
 def _has_compatible_cognee_api(cognee_module: Any) -> bool:

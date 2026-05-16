@@ -41,6 +41,19 @@ Behavior is covered by tests (the scorer reads graph state, the v1→v2 skill ch
 python3 -m pytest tests/ -q
 ```
 
+Prove the real Redis/Cognee memory path in the hackathon environment:
+
+```bash
+python3 -m pip install -r requirements.txt
+export REDIS_URL=redis://localhost:6379
+export LLM_API_KEY=...  # or set OPENAI_API_KEY
+export COGNEE_DATASET=hypothesis-wiki-trusted
+python3 cognee_redis_spike.py
+```
+
+The spike requires `RedisSessionStore` and `CogneeTrustedGraphStore`; it does
+not silently fall back to in-memory stores.
+
 Expected headline (every value computed from graph state, nothing hardcoded):
 
 ```text

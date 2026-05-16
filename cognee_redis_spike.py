@@ -1,11 +1,15 @@
 import asyncio
 import json
 from datetime import datetime, timezone
+from uuid import uuid4
 
-from backend.storage import create_memory_backend, decision_to_dict
+from backend.storage import (
+    create_memory_backend,
+    decision_to_dict,
+)
 
 
-RUN_ID = "hypothesis-wiki-spike"
+RUN_ID = f"hypothesis-wiki-spike-{uuid4().hex[:8]}"
 
 
 async def main() -> None:
@@ -48,7 +52,7 @@ async def main() -> None:
 
     print()
     print("Spike complete. Session memory is routed separately from trusted graph memory.")
-    print("Set REDIS_URL for Redis quarantine and COGNEE_ENABLED=1 for Cognee graph writes.")
+    print("RedisSessionStore and CogneeTrustedGraphStore are required for this spike.")
 
 
 def _preview(value) -> str:
